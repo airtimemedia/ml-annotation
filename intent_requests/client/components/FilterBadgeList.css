@@ -1,0 +1,110 @@
+.filter-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%);
+  border: 1.5px solid #0071e3;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #1d1d1f;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.filter-badge__label {
+  font-weight: 600;
+  color: #0071e3;
+  text-transform: capitalize;
+}
+
+.filter-badge__value {
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-weight: 500;
+  color: #1d1d1f;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-badge__clear {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0071e3;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  margin-left: 0.25rem;
+}
+
+.filter-badge__clear:hover {
+  background: rgba(0, 113, 227, 0.1);
+  color: #005ec3;
+}
+
+.filter-badge__clear:active {
+  transform: scale(0.95);
+}
+
+.filter-badge-list__clear-all {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1.5px solid #d2d2d7;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  background: white;
+  color: #86868b;
+  white-space: nowrap;
+}
+
+.filter-badge-list__clear-all:hover {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border-color: #b8b8bd;
+}
+
+.filter-badge-list__clear-all:active {
+  transform: scale(0.98);
+  background: #e8e8ed;
+}
+
+@media (max-width: 768px) {
+  .filter-badge {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .filter-badge__value {
+    max-width: 120px;
+  }
+
+  .filter-badge-list__clear-all {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+  }
+}

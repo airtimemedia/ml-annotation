@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🎥 Lipsync Videos",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "cd lipsync_videos && npm run dev",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "🎯 Intent Requests - Flask Server",
+      "type": "python",
+      "request": "launch",
+      "module": "app.main",
+      "python": "/Users/nicholasbern/miniconda3/bin/python3",
+      "cwd": "${workspaceFolder}/intent_requests/server",
+      "env": {
+        "FLASK_ENV": "development",
+        "PORT": "5177"
+      },
+      "envFile": "${workspaceFolder}/intent_requests/.env"
+    },
+    {
+      "name": "🎯 Intent Requests - Vite Client",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "cd intent_requests/client && npm run dev",
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🎯 Intent Requests",
+      "configurations": ["🎯 Intent Requests - Flask Server", "🎯 Intent Requests - Vite Client"],
+      "stopAll": true
+    }
+  ]
+}

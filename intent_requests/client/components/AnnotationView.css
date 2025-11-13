@@ -1,0 +1,347 @@
+.annotation-view {
+  min-height: 100vh;
+  background-color: #f5f5f7;
+  padding: 2rem 1.5rem;
+}
+
+.annotation-view__header {
+  max-width: 1400px;
+  margin: 0 auto 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.annotation-view__header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.annotation-view__header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.annotation-view__header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.annotation-view__progress {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #86868b;
+  padding: 8px 16px;
+  background: #f5f5f7;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.annotation-view__progress .reviewed {
+  color: #34c759;
+  font-weight: 600;
+}
+
+.annotation-view__main-panel {
+  max-width: 1400px;
+  margin: 0 auto 1.5rem;
+  background: white;
+  border-radius: 18px;
+  padding: 2rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.annotation-view__content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.annotation-view__request-section,
+.annotation-view__annotation-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.annotation-view__section-title,
+.annotation-view__subsection-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #1d1d1f;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+
+.annotation-view__input-display {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding: 1.25rem;
+  background-color: #fafafa;
+  border-radius: 12px;
+  white-space: pre-wrap;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  height: 500px;
+  overflow-y: auto;
+  overflow-x: auto;
+  color: #1d1d1f;
+  border: 1.5px solid #d2d2d7;
+  margin: 0;
+  word-wrap: break-word;
+}
+
+.annotation-view__input-display::-webkit-scrollbar {
+  width: 8px;
+}
+
+.annotation-view__input-display::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.annotation-view__input-display::-webkit-scrollbar-thumb {
+  background: #d2d2d7;
+  border-radius: 4px;
+}
+
+.annotation-view__input-display::-webkit-scrollbar-thumb:hover {
+  background: #b8b8bd;
+}
+
+.annotation-view__context-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  padding: 1rem 1.25rem;
+  background-color: #f5f5f7;
+  border-radius: 12px;
+  color: #6e6e73;
+  white-space: pre-wrap;
+  border: 1px solid #e5e5e7;
+}
+
+.annotation-view__field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.annotation-view__annotation-section .annotation-view__field {
+  flex: 1;
+  width: 100%;
+}
+
+.annotation-view__input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #d2d2d7;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: #fafafa;
+  color: #1d1d1f;
+}
+
+.annotation-view__input:focus {
+  outline: none;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+}
+
+.annotation-view__textarea {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  padding: 1.25rem;
+  border: 1.5px solid #d2d2d7;
+  border-radius: 12px;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  resize: none;
+  background: #fafafa;
+  color: #1d1d1f;
+  line-height: 1.6;
+  height: 500px;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+.annotation-view__textarea:focus {
+  outline: none;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+}
+
+.annotation-view__textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.annotation-view__textarea::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 12px 0;
+}
+
+.annotation-view__textarea::-webkit-scrollbar-thumb {
+  background: #d2d2d7;
+  border-radius: 4px;
+}
+
+.annotation-view__textarea::-webkit-scrollbar-thumb:hover {
+  background: #b8b8bd;
+}
+
+.annotation-view__actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e5e7;
+}
+
+.annotation-view__actions button {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  min-width: 100px;
+}
+
+.annotation-view__actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.annotation-view__actions button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.annotation-view__actions button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* Save button - Blue accent */
+.btn-save {
+  background: #007aff;
+  color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-save:not(:disabled):hover {
+  background: #0051d5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-save:not(:disabled):active {
+  background: #004fc4;
+}
+
+/* Secondary buttons - Grey */
+.btn-secondary {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  border: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.btn-secondary:not(:disabled):hover {
+  background: #e8e8ed;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.btn-secondary:not(:disabled):active {
+  background: #d2d2d7;
+}
+
+.annotation-view__empty {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #86868b;
+}
+
+@media (max-width: 1024px) {
+  .annotation-view__main-panel {
+    padding: 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .annotation-view__content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .annotation-view__header {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    align-items: flex-start;
+  }
+
+  .annotation-view__header-left {
+    width: 100%;
+  }
+
+  .annotation-view__header h1 {
+    font-size: 1.5rem;
+  }
+
+  .annotation-view__header-right {
+    width: 100%;
+  }
+
+  .annotation-view__subsection-title {
+    font-size: 1.25rem;
+  }
+
+  .annotation-view__textarea {
+    height: 450px;
+  }
+
+  .annotation-view__actions {
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    gap: 0.75rem;
+  }
+
+  .annotation-view__actions button {
+    height: 44px;
+    font-size: 0.9rem;
+  }
+
+  /* Save button full width on top */
+  .btn-save {
+    flex-basis: 100%;
+    order: -1;
+  }
+
+  /* All secondary buttons equal width */
+  .btn-secondary {
+    flex: 1;
+    min-width: 0;
+  }
+}

@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Build files
+build
+
+# OS files
+Thumbs.db
+
+# Old files (from previous implementation)
+annotate_videos.html
+fetch_s3_videos.js
+server.js
+csv_field_values.json
+README_ANNOTATION_TOOL.md
+
+# Data files (fetched from S3, not needed locally)
+public/video_list.json
+public/final_meta.csv

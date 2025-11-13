@@ -1,0 +1,179 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // ============================================================================
+    // LIPSYNC VIDEOS TASKS
+    // ============================================================================
+    {
+      "label": "lipsync: dev",
+      "type": "npm",
+      "script": "dev",
+      "path": "lipsync_videos/",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "lipsync"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/lipsync_videos"
+      }
+    },
+    {
+      "label": "lipsync: build",
+      "type": "npm",
+      "script": "build",
+      "path": "lipsync_videos/",
+      "problemMatcher": ["$tsc"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "lipsync"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/lipsync_videos"
+      }
+    },
+    {
+      "label": "lipsync: preview",
+      "type": "npm",
+      "script": "preview",
+      "path": "lipsync_videos/",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "lipsync"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/lipsync_videos"
+      }
+    },
+    {
+      "label": "lipsync: lint",
+      "type": "npm",
+      "script": "lint",
+      "path": "lipsync_videos/",
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "lipsync"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/lipsync_videos"
+      }
+    },
+
+    // ============================================================================
+    // INTENT REQUESTS TASKS
+    // ============================================================================
+    {
+      "label": "intent: dev",
+      "type": "npm",
+      "script": "dev",
+      "path": "intent_requests/",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "intent"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/intent_requests"
+      }
+    },
+    {
+      "label": "intent: build",
+      "type": "npm",
+      "script": "build",
+      "path": "intent_requests/",
+      "problemMatcher": ["$tsc"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "intent"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/intent_requests"
+      }
+    },
+    {
+      "label": "intent: preview",
+      "type": "npm",
+      "script": "preview",
+      "path": "intent_requests/",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "intent"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/intent_requests"
+      }
+    },
+    {
+      "label": "intent: lint",
+      "type": "npm",
+      "script": "lint",
+      "path": "intent_requests/",
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "intent"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/intent_requests"
+      }
+    },
+
+    // ============================================================================
+    // COMBINED TASKS
+    // ============================================================================
+    {
+      "label": "all: dev",
+      "dependsOn": ["lipsync: dev", "intent: dev"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "all: build",
+      "dependsOn": ["lipsync: build", "intent: build"],
+      "problemMatcher": ["$tsc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "all: lint",
+      "dependsOn": ["lipsync: lint", "intent: lint"],
+      "problemMatcher": ["$eslint-stylish"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}
