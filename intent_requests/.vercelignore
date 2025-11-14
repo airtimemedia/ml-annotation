@@ -1,9 +1,24 @@
+# Development and build artifacts
 scripts/
-server/
-client/node_modules/
-client/src/
-*.pyc
-__pycache__/
+**/venv/
+**/temp_venv*/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
 .DS_Store
+
+# Documentation
 *.md
 README.md
+METRICS_ARCHITECTURE.md
+
+# Development config
+.env.example
+.gitignore
+.vscode/
+
+# Jupyter notebooks
+*.ipynb
+
+# Node modules (handled by build)
+node_modules/

@@ -1,8 +1,8 @@
 import os
 import threading
-import json
 import tempfile
-import requests
+import pyarrow.parquet as pq
+import pyarrow as pa
 from huggingface_hub import hf_hub_download, HfApi
 from typing import List, Dict, Any, Optional
 
@@ -31,49 +31,22 @@ class DatasetService:
 
         print(f"{'Refreshing' if force_refresh else 'Loading'} from Hugging Face...")
 
-        # Use HuggingFace Datasets Server API to get data as JSON
-        # This avoids needing pandas/pyarrow
-        api_url = f"https://datasets-server.huggingface.co/rows"
-        params = {
-            "dataset": self.dataset_repo,
-            "config": "default",
-            "split": "train",
-            "offset": 0,
-            "length": 100  # Fetch in batches
-        }
+        # Download parquet file from HuggingFace
+        parquet_path = hf_hub_download(
+            repo_id=self.dataset_repo,
+            filename="data/train-00000-of-00001.parquet",
+            repo_type="dataset",
+            token=self.hf_token
+        )
 
-        headers = {"Authorization": f"Bearer {self.hf_token}"}
+        # Read parquet file with pyarrow (no pandas needed)
+        table = pq.read_table(parquet_path)
 
-        all_rows = []
-        offset = 0
-        batch_size = 100
+        # Convert to list of dicts
+        data_list = table.to_pylist()
 
-        while True:
-            params["offset"] = offset
-            params["length"] = batch_size
-
-            response = requests.get(api_url, params=params, headers=headers)
-            response.raise_for_status()
-
-            data = response.json()
-            rows = data.get("rows", [])
-
-            if not rows:
-                break
-
-            # Extract row data
-            for item in rows:
-                row_data = item.get("row", {})
-                all_rows.append(self._transform_row(row_data))
-
-            # Check if we've fetched all rows
-            if len(rows) < batch_size:
-                break
-
-            offset += batch_size
-            print(f"Loaded {len(all_rows)} rows so far...")
-
-        self.cache = all_rows
+        # Transform rows
+        self.cache = [self._transform_row(row) for row in data_list]
         print(f"Loaded {len(self.cache)} rows into memory")
         return self.cache
 
@@ -94,46 +67,25 @@ class DatasetService:
             try:
                 print(f"Background: {'Refreshing' if force_refresh else 'Loading'} from Hugging Face...")
 
-                # Use HuggingFace Datasets Server API
-                api_url = f"https://datasets-server.huggingface.co/rows"
-                params = {
-                    "dataset": self.dataset_repo,
-                    "config": "default",
-                    "split": "train",
-                    "offset": 0,
-                    "length": 100
-                }
+                # Download parquet file from HuggingFace
+                parquet_path = hf_hub_download(
+                    repo_id=self.dataset_repo,
+                    filename="data/train-00000-of-00001.parquet",
+                    repo_type="dataset",
+                    token=self.hf_token
+                )
 
-                headers = {"Authorization": f"Bearer {self.hf_token}"}
+                # Read parquet file with pyarrow
+                table = pq.read_table(parquet_path)
 
-                all_rows = []
-                offset = 0
-                batch_size = 100
+                # Convert to list of dicts
+                data_list = table.to_pylist()
 
-                while True:
-                    params["offset"] = offset
-                    params["length"] = batch_size
-
-                    response = requests.get(api_url, params=params, headers=headers)
-                    response.raise_for_status()
-
-                    data = response.json()
-                    rows = data.get("rows", [])
-
-                    if not rows:
-                        break
-
-                    for item in rows:
-                        row_data = item.get("row", {})
-                        all_rows.append(self._transform_row(row_data))
-
-                    if len(rows) < batch_size:
-                        break
-
-                    offset += batch_size
+                # Transform rows
+                new_cache = [self._transform_row(row) for row in data_list]
 
                 with self._loading_lock:
-                    self.cache = all_rows
+                    self.cache = new_cache
                     self._is_loading = False
                     print(f"Background: Loaded {len(self.cache)} rows into memory")
             except Exception as e:
@@ -175,17 +127,22 @@ class DatasetService:
 
         print(f"Pushing {len(self.cache)} rows to Hugging Face...")
 
-        # Save as JSON (lightweight alternative)
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
-            json.dump(self.cache, tmp, indent=2)
+        # Convert to PyArrow Table
+        table = pa.Table.from_pylist(self.cache)
+
+        # Write to temporary parquet file
+        with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as tmp:
             tmp_path = tmp.name
 
         try:
+            # Write parquet file
+            pq.write_table(table, tmp_path)
+
             # Upload using HuggingFace Hub API
             api = HfApi()
             api.upload_file(
                 path_or_fileobj=tmp_path,
-                path_in_repo="data/train.json",
+                path_in_repo="data/train-00000-of-00001.parquet",
                 repo_id=self.dataset_repo,
                 repo_type="dataset",
                 token=self.hf_token,
@@ -194,7 +151,6 @@ class DatasetService:
             print(f"Successfully pushed to Hugging Face")
         finally:
             # Clean up temp file
-            import os
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 

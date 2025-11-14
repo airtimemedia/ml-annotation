@@ -5,8 +5,8 @@ flask-cors>=4.0.0
 # Hugging Face
 huggingface-hub>=0.19.0
 
-# HTTP requests
-requests>=2.31.0
+# Parquet support (minimal - just pyarrow, no pandas)
+pyarrow>=14.0.0
 
 # Environment variables
 python-dotenv>=1.0.0
