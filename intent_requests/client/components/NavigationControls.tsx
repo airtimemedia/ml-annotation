@@ -135,26 +135,29 @@ export function NavigationControls({
               <span>Status</span>
             </div>
             <div className="row-list__body">
-              {visibleIndices.map(({ row, originalIndex }) => (
-                <div
-                  key={originalIndex}
-                  className={`row-list__item ${originalIndex === currentIndex ? 'active' : ''} ${
-                    reviewedRows.has(originalIndex) ? 'reviewed' : ''
-                  }`}
-                  onClick={() => onJumpTo(originalIndex)}
-                >
-                  <span className="row-list__number">{originalIndex + 1}</span>
-                  <span className="row-list__prompt" title={row.prompt_name}>
-                    {row.prompt_name}
-                  </span>
-                  <span className="row-list__action" title={getActionType(row)}>
-                    {getActionType(row)}
-                  </span>
-                  <span className="row-list__status">
-                    {reviewedRows.has(originalIndex) ? '✓ Reviewed' : 'Not reviewed'}
-                  </span>
-                </div>
-              ))}
+              {visibleIndices.map(({ row, originalIndex }) => {
+                const isReviewed = row.manually_reviewed === true;
+                return (
+                  <div
+                    key={originalIndex}
+                    className={`row-list__item ${originalIndex === currentIndex ? 'active' : ''} ${
+                      isReviewed ? 'reviewed' : ''
+                    }`}
+                    onClick={() => onJumpTo(originalIndex)}
+                  >
+                    <span className="row-list__number">{originalIndex + 1}</span>
+                    <span className="row-list__prompt" title={row.prompt_name}>
+                      {row.prompt_name}
+                    </span>
+                    <span className="row-list__action" title={getActionType(row)}>
+                      {getActionType(row)}
+                    </span>
+                    <span className="row-list__status">
+                      {isReviewed ? '✓ Reviewed' : 'Not reviewed'}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
             {hasMore && (
               <div className="row-list__footer">
