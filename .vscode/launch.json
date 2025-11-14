@@ -19,7 +19,7 @@
         "FLASK_ENV": "development",
         "PORT": "5177"
       },
-      "envFile": "${workspaceFolder}/intent_requests/.env"
+      "envFile": "${workspaceFolder}/.env"
     },
     {
       "name": "🎯 Intent Requests - Vite Client",

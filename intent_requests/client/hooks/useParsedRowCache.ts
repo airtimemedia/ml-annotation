@@ -22,14 +22,14 @@ export function useParsedRowCache(rows: DatasetRow[]): Map<DatasetRow, ParsedRow
 
       // Parse output JSON
       try {
-        parsedOutput = JSON.parse(row.unified_format_output_enriched_fixed);
+        parsedOutput = JSON.parse(row.output);
       } catch {
         parseError = true;
       }
 
       // Parse input JSON (optional)
       try {
-        parsedInput = JSON.parse(row.new_room_unified_format_input);
+        parsedInput = JSON.parse(row.input);
       } catch {
         // Input parsing is optional
       }

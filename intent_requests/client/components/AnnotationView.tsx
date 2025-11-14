@@ -18,9 +18,10 @@ interface AnnotationViewProps {
   rows: DatasetRow[];
   onAnnotationComplete: (annotations: Annotation[]) => void;
   onRefreshDataset: () => Promise<void>;
+  onUpdateRow: (index: number, updatedRow: Partial<DatasetRow>) => void;
 }
 
-export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset }: AnnotationViewProps) {
+export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, onUpdateRow }: AnnotationViewProps) {
   // Create parsed cache ONCE at the top level
   const parsedCache = useParsedRowCache(rows);
   // URL state management
@@ -39,6 +40,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset }:
   const [editedPrompt, setEditedPrompt] = useState('');
   const [editedInput, setEditedInput] = useState('');
   const [editedOutput, setEditedOutput] = useState('');
+  const [isManuallyReviewed, setIsManuallyReviewed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [reviewedRows, setReviewedRows] = useState<Set<number>>(new Set());
 
@@ -118,9 +120,10 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset }:
   useEffect(() => {
     if (currentRow) {
       setEditedPrompt(currentRow.prompt_name);
-      setEditedInput(formatInput(currentRow.new_room_unified_format_input));
+      setEditedInput(formatInput(currentRow.input));
       // Format JSON output for better readability
-      setEditedOutput(formatJSON(currentRow.unified_format_output_enriched_fixed));
+      setEditedOutput(formatJSON(currentRow.output));
+      setIsManuallyReviewed(currentRow.manually_reviewed || false);
     }
   }, [currentFilteredIndex, currentRow]);
 
@@ -136,8 +139,9 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset }:
     if (!currentRow) return false;
     return (
       editedPrompt !== currentRow.prompt_name ||
-      editedInput !== formatInput(currentRow.new_room_unified_format_input) ||
-      editedOutput !== formatJSON(currentRow.unified_format_output_enriched_fixed)
+      editedInput !== formatInput(currentRow.input) ||
+      editedOutput !== formatJSON(currentRow.output) ||
+      isManuallyReviewed !== (currentRow.manually_reviewed || false)
     );
   };
 
@@ -153,15 +157,25 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset }:
 
     const annotation: Annotation = {
       prompt_name: editedPrompt,
-      new_room_unified_format_input: editedInput,
-      unified_format_output_enriched_fixed: editedOutput,
-      reviewed: true,
-      timestamp: Date.now(),
-      last_updated: new Date().toISOString(),
+      input: editedInput,
+      output: editedOutput,
+      manually_reviewed: isManuallyReviewed,
+      manually_reviewed_ts: isManuallyReviewed ? Date.now() : (currentRow.manually_reviewed_ts || null),
+      last_updated_ts: new Date().toISOString(),
     };
 
     const updatedAnnotations = [...annotations, annotation];
     setAnnotations(updatedAnnotations);
+
+    // Update the row in parent state immediately (optimistic update)
+    onUpdateRow(currentOriginalIndex, {
+      prompt_name: editedPrompt,
+      input: editedInput,
+      output: editedOutput,
+      manually_reviewed: isManuallyReviewed,
+      manually_reviewed_ts: isManuallyReviewed ? Date.now() : (currentRow.manually_reviewed_ts || 0),
+      last_updated_ts: new Date().toISOString(),
+    });
 
     // Show brief saving indicator
     setIsSaving(true);
@@ -327,11 +341,23 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset }:
     }
   };
 
+  const DATASET_REPO = "Cantina/intent-full-data-20251106";
+  const DATASET_VIEWER_URL = `https://huggingface.co/datasets/${DATASET_REPO}/viewer?views%5B%5D=train`;
+
   return (
     <div className="annotation-view">
       <header className="annotation-view__header">
         <div className="annotation-view__header-left">
           <h1>Intent Annotation</h1>
+          <a
+            href={DATASET_VIEWER_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="annotation-view__dataset-link"
+            title="View dataset on HuggingFace"
+          >
+            {DATASET_REPO}
+          </a>
         </div>
         <div className="annotation-view__header-right">
           <JumpControl
@@ -375,6 +401,21 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset }:
                 placeholder='{"action": "...", "requester": "...", "requested_users": [...], "action_metadata": {...}}'
                 spellCheck={false}
               />
+            </div>
+            <div className="annotation-view__reviewed-checkbox">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={isManuallyReviewed}
+                  onChange={(e) => setIsManuallyReviewed(e.target.checked)}
+                />
+                <span>Manually Reviewed</span>
+              </label>
+              <span className="annotation-view__reviewed-date">
+                {currentRow.manually_reviewed_ts && currentRow.manually_reviewed_ts !== 0
+                  ? `Last reviewed: ${new Date(currentRow.manually_reviewed_ts).toLocaleString()}`
+                  : ''}
+              </span>
             </div>
           </div>
         </div>

@@ -60,7 +60,12 @@ export function NavigationControls({
     return matches;
   };
 
-  // Skip expensive computations when collapsed
+  // Calculate count (always computed for header)
+  const filteredCount = hasActiveFilters(filter)
+    ? rows.filter(rowMatchesFilter).length
+    : rows.length;
+
+  // Only build full display list when expanded (for performance)
   const displayIndices = !isCollapsed
     ? (hasActiveFilters(filter)
         ? rows.map((row, i) => ({ row, originalIndex: i })).filter(({ row }) => rowMatchesFilter(row))
@@ -75,10 +80,10 @@ export function NavigationControls({
     setVisibleCount(prev => prev + 20);
   };
 
-  // Header title
+  // Header title - always shows correct count
   const headerTitle = hasActiveFilters(filter)
-    ? `Filtered Rows${!isCollapsed ? ` (${displayIndices.length})` : ''}`
-    : 'All Rows';
+    ? `Filtered Rows (${filteredCount})`
+    : `All Rows (${filteredCount})`;
 
   return (
     <div className={`navigation-controls ${isCollapsed ? 'navigation-controls--collapsed' : ''}`}>

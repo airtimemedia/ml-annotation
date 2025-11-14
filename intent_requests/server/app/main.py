@@ -1,5 +1,15 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from app.services.app import create_app
+
+# Load .env from repository root (2 levels up from this file)
+env_path = Path(__file__).resolve().parents[3] / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+    print(f"Loaded .env from: {env_path}")
+else:
+    print(f"Warning: .env not found at {env_path}")
 
 app = create_app()
 

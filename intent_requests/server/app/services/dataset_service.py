@@ -16,6 +16,10 @@ class DatasetService:
         if not self.hf_token:
             raise ValueError("HUGGINGFACE_TOKEN environment variable is required")
 
+    def _transform_row(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        """No transformation needed - just pass through"""
+        return dict(row)
+
     def load(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
         """Load dataset from cache or Hugging Face (blocking)"""
         if self.cache and not force_refresh:
@@ -29,8 +33,8 @@ class DatasetService:
             token=self.hf_token
         )
 
-        # Convert to list of dicts
-        self.cache = [dict(row) for row in dataset]
+        # Convert to list of dicts and transform column names
+        self.cache = [self._transform_row(dict(row)) for row in dataset]
         print(f"Loaded {len(self.cache)} rows into memory")
         return self.cache
 
@@ -55,7 +59,7 @@ class DatasetService:
                     split="train",
                     token=self.hf_token
                 )
-                new_cache = [dict(row) for row in dataset]
+                new_cache = [self._transform_row(dict(row)) for row in dataset]
 
                 with self._loading_lock:
                     self.cache = new_cache
@@ -84,7 +88,7 @@ class DatasetService:
         if not prompt_name:
             raise ValueError("prompt_name is required")
 
-        # Find and update the row
+        # Find and update the row (cache uses new column names)
         for i, row in enumerate(self.cache):
             if row["prompt_name"] == prompt_name:
                 self.cache[i].update(row_data)

@@ -18,8 +18,9 @@
 
 .annotation-view__header-left {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .annotation-view__header h1 {
@@ -28,6 +29,20 @@
   color: #1d1d1f;
   margin: 0;
   letter-spacing: -0.5px;
+}
+
+.annotation-view__dataset-link {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #007aff;
+  text-decoration: none;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  transition: color 0.2s ease;
+}
+
+.annotation-view__dataset-link:hover {
+  color: #0051d5;
+  text-decoration: underline;
 }
 
 .annotation-view__header-right {
@@ -282,6 +297,57 @@
   justify-content: center;
   font-size: 1.5rem;
   color: #86868b;
+}
+
+.annotation-view__reviewed-checkbox {
+  margin-top: 1.25rem;
+  padding: 0.75rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.annotation-view__reviewed-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  margin: 0;
+  user-select: none;
+}
+
+.annotation-view__reviewed-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #007aff;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  margin: 0;
+}
+
+.annotation-view__reviewed-checkbox input[type="checkbox"]:checked {
+  transform: scale(1.05);
+}
+
+.annotation-view__reviewed-checkbox input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+}
+
+.annotation-view__reviewed-checkbox label span {
+  letter-spacing: -0.2px;
+}
+
+.annotation-view__reviewed-date {
+  font-size: 1rem;
+  color: #86868b;
+  font-weight: 400;
+  letter-spacing: -0.1px;
 }
 
 @media (max-width: 1024px) {

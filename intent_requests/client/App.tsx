@@ -96,6 +96,15 @@ function App() {
     console.log('Annotations complete:', annotations);
   };
 
+  const handleUpdateRow = (index: number, updatedRow: Partial<DatasetRow>) => {
+    // Optimistic update: immediately update the row in local state
+    setRows(prevRows => {
+      const newRows = [...prevRows];
+      newRows[index] = { ...newRows[index], ...updatedRow };
+      return newRows;
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="app">
@@ -136,6 +145,7 @@ function App() {
       rows={rows}
       onAnnotationComplete={handleAnnotationComplete}
       onRefreshDataset={refreshDataset}
+      onUpdateRow={handleUpdateRow}
     />
   );
 }

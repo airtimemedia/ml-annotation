@@ -1,18 +1,19 @@
 export interface DatasetRow {
   prompt_name: string;
-  new_room_unified_format_input: string;
-  unified_format_output_enriched_fixed: string;
-  'gpt5-results-20250905': string;
-  'gpt5-results-20251104': string;
+  input: string;
+  output: string;
+  manually_reviewed?: boolean;
+  manually_reviewed_ts?: number;
+  last_updated_ts?: string;
 }
 
 export interface Annotation {
   prompt_name: string;
-  new_room_unified_format_input: string;
-  unified_format_output_enriched_fixed: string;
-  reviewed: boolean;
-  timestamp: number;
-  last_updated: string;
+  input: string;
+  output: string;
+  manually_reviewed: boolean;
+  manually_reviewed_ts: number;
+  last_updated_ts: string;
 }
 
 export interface ParsedOutput {

@@ -1,2 +1,10 @@
-huggingface_hub>=0.20.0
+# Hugging Face libraries for dataset manipulation
+datasets>=2.14.0
+huggingface-hub>=0.20.0
+
+# Environment variables
 python-dotenv>=1.0.0
+
+# Jupyter notebook support
+ipykernel>=6.25.0
+jupyter>=1.0.0
