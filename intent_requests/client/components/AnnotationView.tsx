@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { DatasetRow, Annotation, FilterState, FilterType, hasActiveFilters } from '@/types';
+import { DatasetRow, Annotation, FilterState, FilterType, hasActiveFilters, ReviewStatusFilter } from '@/types';
 import { MetricsPanel } from './MetricsPanel';
 import { NavigationControls } from './NavigationControls';
 import { JumpControl } from './JumpControl';
 import { FilterBadgeList } from './FilterBadgeList';
 import { UnsavedChangesModal } from './UnsavedChangesModal';
+import { DatasetSelector } from './DatasetSelector';
 import { useFilteredRows } from '../hooks/useFilteredRows';
 import { useUrlState } from '../hooks/useUrlState';
 import { useParsedRowCache } from '../hooks/useParsedRowCache';
@@ -16,12 +17,15 @@ const API_BASE = import.meta.env.DEV ? 'http://localhost:5177' : '';
 
 interface AnnotationViewProps {
   rows: DatasetRow[];
+  dataset: string;
+  isLoadingDataset: boolean;
+  onDatasetChange: (dataset: string) => void;
   onAnnotationComplete: (annotations: Annotation[]) => void;
   onRefreshDataset: () => Promise<void>;
   onUpdateRow: (index: number, updatedRow: Partial<DatasetRow>) => void;
 }
 
-export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, onUpdateRow }: AnnotationViewProps) {
+export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChange, onAnnotationComplete, onRefreshDataset, onUpdateRow }: AnnotationViewProps) {
   // Create parsed cache ONCE at the top level
   const parsedCache = useParsedRowCache(rows);
   // URL state management
@@ -48,6 +52,10 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
   // Modal state for unsaved changes
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+
+  // Refs for auto-scrolling textareas to bottom
+  const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Get filtered rows and index mappings
   const { filteredRows, mapOriginalToFiltered } = useFilteredRows(rows, filter, parsedCache);
@@ -81,9 +89,9 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
   // Sync state to URL (after initialization)
   useEffect(() => {
     if (isInitialized.current && rows.length > 0) {
-      updateUrl(currentOriginalIndex, filter);
+      updateUrl(currentOriginalIndex, filter, dataset);
     }
-  }, [currentOriginalIndex, filter, rows.length, updateUrl]);
+  }, [currentOriginalIndex, filter, dataset, rows.length, updateUrl]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -127,6 +135,19 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
       setIsManuallyReviewed(currentRow.manually_reviewed || false);
     }
   }, [currentFilteredIndex, currentRow]);
+
+  // Auto-scroll textareas to bottom when content changes
+  useEffect(() => {
+    if (inputTextareaRef.current) {
+      inputTextareaRef.current.scrollTop = inputTextareaRef.current.scrollHeight;
+    }
+  }, [editedInput]);
+
+  useEffect(() => {
+    if (outputTextareaRef.current) {
+      outputTextareaRef.current.scrollTop = outputTextareaRef.current.scrollHeight;
+    }
+  }, [editedOutput]);
 
   // Don't render main panel if no rows match filters, but keep the rest of the UI
   const hasFilteredRows = filteredRows.length > 0;
@@ -193,6 +214,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
         },
         body: JSON.stringify({
           annotation,
+          dataset,
         }),
       });
 
@@ -218,6 +240,15 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
       navigationFn();
       // Trigger background refresh after navigation
       onRefreshDataset();
+    }
+  };
+
+  const handleDatasetChangeWithCheck = (newDataset: string) => {
+    if (hasUnsavedChanges()) {
+      setPendingNavigation(() => () => onDatasetChange(newDataset));
+      setShowUnsavedModal(true);
+    } else {
+      onDatasetChange(newDataset);
     }
   };
 
@@ -347,14 +378,17 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
     }
   };
 
-  const DATASET_REPO = "Cantina/intent-full-data-20251106";
-  const DATASET_VIEWER_URL = `https://huggingface.co/datasets/${DATASET_REPO}/viewer?views%5B%5D=train`;
+  const DATASET_VIEWER_URL = `https://huggingface.co/datasets/${dataset}/viewer?views%5B%5D=train`;
 
   return (
     <div className="annotation-view">
       <header className="annotation-view__header">
         <div className="annotation-view__header-left">
-          <h1>Intent Annotation</h1>
+          <DatasetSelector
+            currentDataset={dataset}
+            onDatasetChange={handleDatasetChangeWithCheck}
+            disabled={isLoadingDataset}
+          />
           <a
             href={DATASET_VIEWER_URL}
             target="_blank"
@@ -362,7 +396,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
             className="annotation-view__dataset-link"
             title="View dataset on HuggingFace"
           >
-            {DATASET_REPO}
+            View on HuggingFace →
           </a>
         </div>
         <div className="annotation-view__header-right">
@@ -402,6 +436,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
           <div className="annotation-view__request-section">
             <h3 className="annotation-view__subsection-title">Input</h3>
             <textarea
+              ref={inputTextareaRef}
               value={editedInput}
               onChange={(e) => setEditedInput(e.target.value)}
               className="annotation-view__textarea"
@@ -413,6 +448,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
             <h3 className="annotation-view__section-title">Output</h3>
             <div className="annotation-view__field">
               <textarea
+                ref={outputTextareaRef}
                 id="output"
                 value={editedOutput}
                 onChange={(e) => setEditedOutput(e.target.value)}

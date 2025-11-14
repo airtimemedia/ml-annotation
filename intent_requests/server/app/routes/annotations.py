@@ -15,6 +15,7 @@ def save_annotation():
             }), 400
 
         annotation = data["annotation"]
+        dataset_repo = data.get("dataset", "Cantina/intent-full-data-20251106")
         prompt_name = annotation.get("prompt_name")
 
         if not prompt_name:
@@ -24,12 +25,13 @@ def save_annotation():
 
         # Load fresh data, update the row, and push to Hugging Face
         # This ensures no shared state between users
-        dataset_service = get_dataset_service()
+        dataset_service = get_dataset_service(dataset_repo=dataset_repo)
         dataset_service.update_and_push(annotation)
 
         return jsonify({
             "success": True,
-            "message": "Annotation saved to Hugging Face"
+            "message": "Annotation saved to Hugging Face",
+            "dataset": dataset_repo
         })
     except Exception as e:
         return jsonify({

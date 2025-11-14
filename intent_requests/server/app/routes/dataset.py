@@ -9,7 +9,9 @@ def load_dataset():
     """Load dataset from Hugging Face (always fresh to avoid user data leaking)"""
     try:
         refresh = request.args.get("refresh", "false").lower() == "true"
-        dataset_service = get_dataset_service()
+        dataset_repo = request.args.get("dataset", "Cantina/intent-full-data-20251106")
+
+        dataset_service = get_dataset_service(dataset_repo=dataset_repo)
 
         # Always load fresh data (no shared cache between users)
         rows = dataset_service.load(force_refresh=refresh)
@@ -18,7 +20,8 @@ def load_dataset():
             "success": True,
             "rows": rows,
             "count": len(rows),
-            "source": "huggingface"
+            "source": "huggingface",
+            "dataset": dataset_repo
         })
     except Exception as e:
         return jsonify({

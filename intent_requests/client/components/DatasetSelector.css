@@ -1,0 +1,204 @@
+.dataset-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dataset-selector__input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1.5px solid #e5e5e7;
+  border-radius: 12px;
+  padding: 0.5rem;
+  transition: all 0.2s ease;
+  min-width: 400px;
+}
+
+.dataset-selector__input-wrapper:focus-within {
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.dataset-selector__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  background: transparent;
+  padding: 0.25rem 0.5rem;
+}
+
+.dataset-selector__display {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #007aff;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s ease;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.dataset-selector__display:hover {
+  color: #0051d5;
+}
+
+.dataset-selector__display:disabled {
+  color: #86868b;
+  cursor: not-allowed;
+}
+
+.dataset-selector__browse-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f5f5f7;
+  border-radius: 8px;
+  color: #007aff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dataset-selector__browse-button:hover {
+  background: #e8e8ed;
+  color: #0051d5;
+}
+
+.dataset-selector__browse-button:disabled {
+  background: #f5f5f7;
+  color: #86868b;
+  cursor: not-allowed;
+}
+
+.dataset-selector__dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1.5px solid #e5e5e7;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dataset-selector__loading,
+.dataset-selector__error {
+  padding: 1rem;
+  text-align: center;
+  color: #86868b;
+  font-size: 0.9rem;
+}
+
+.dataset-selector__error {
+  color: #ff3b30;
+}
+
+.dataset-selector__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dataset-selector__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid #f5f5f7;
+}
+
+.dataset-selector__option:last-child {
+  border-bottom: none;
+}
+
+.dataset-selector__option:hover {
+  background: #f5f5f7;
+}
+
+.dataset-selector__option--active {
+  background: #e8f0fe;
+}
+
+.dataset-selector__option--active:hover {
+  background: #dce7f9;
+}
+
+.dataset-selector__option-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  margin-bottom: 0.25rem;
+}
+
+.dataset-selector__option-meta {
+  font-size: 0.8rem;
+  color: #86868b;
+}
+
+.dataset-selector__dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dataset-selector__dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dataset-selector__dropdown::-webkit-scrollbar-thumb {
+  background: #d2d2d7;
+  border-radius: 4px;
+}
+
+.dataset-selector__dropdown::-webkit-scrollbar-thumb:hover {
+  background: #b8b8bd;
+}
+
+@media (max-width: 768px) {
+  .dataset-selector__input,
+  .dataset-selector__display {
+    min-width: 200px;
+    font-size: 0.9rem;
+  }
+
+  .dataset-selector__dropdown {
+    max-height: 300px;
+  }
+}

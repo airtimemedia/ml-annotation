@@ -11,10 +11,10 @@ os.environ.setdefault("HUGGINGFACE_HUB_CACHE", "/tmp/huggingface/hub")
 
 
 class DatasetService:
-    def __init__(self):
+    def __init__(self, dataset_repo: str = "Cantina/intent-full-data-20251106"):
         # No in-memory cache - always load fresh to avoid user data leaking between requests
         self.hf_token = os.environ.get("HUGGINGFACE_TOKEN")
-        self.dataset_repo = "Cantina/intent-full-data-20251106"
+        self.dataset_repo = dataset_repo
 
         if not self.hf_token:
             raise ValueError("HUGGINGFACE_TOKEN environment variable is required")
@@ -112,6 +112,6 @@ class DatasetService:
                 os.unlink(tmp_path)
 
 
-def get_dataset_service() -> DatasetService:
+def get_dataset_service(dataset_repo: str = "Cantina/intent-full-data-20251106") -> DatasetService:
     """Create a new DatasetService instance (no singleton to avoid shared state)"""
-    return DatasetService()
+    return DatasetService(dataset_repo=dataset_repo)

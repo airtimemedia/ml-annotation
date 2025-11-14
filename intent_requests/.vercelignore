@@ -20,5 +20,13 @@ METRICS_ARCHITECTURE.md
 # Jupyter notebooks
 *.ipynb
 
-# Node modules (handled by build)
+# Node modules and package files
 node_modules/
+package-lock.json
+client/package-lock.json
+
+# TypeScript config (not needed in production)
+client/tsconfig*.json
+
+# Client source files (only dist/ is needed)
+client/src/

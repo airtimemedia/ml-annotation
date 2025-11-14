@@ -81,6 +81,10 @@
 .metrics-panel__section {
   display: flex;
   flex-direction: column;
+  padding: 1.25rem;
+  /* background: #fafafa; */
+  border: 1.5px solid #e5e5e7;
+  border-radius: 12px;
 }
 
 .metrics-panel__subtitle {

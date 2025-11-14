@@ -7,7 +7,23 @@ import './App.css';
 // In production, use relative URLs (same origin)
 const API_BASE = import.meta.env.DEV ? 'http://localhost:5177' : '';
 
+const DEFAULT_DATASET = 'Cantina/intent-full-data-20251106';
+const DATASET_STORAGE_KEY = 'annotation-tool-dataset';
+
 function App() {
+  // Load dataset from URL → localStorage → default
+  const getInitialDataset = (): string => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlDataset = urlParams.get('dataset');
+    if (urlDataset) return urlDataset;
+
+    const storedDataset = localStorage.getItem(DATASET_STORAGE_KEY);
+    if (storedDataset) return storedDataset;
+
+    return DEFAULT_DATASET;
+  };
+
+  const [dataset, setDataset] = useState<string>(getInitialDataset());
   const [rows, setRows] = useState<DatasetRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,11 +32,19 @@ function App() {
 
   useEffect(() => {
     loadDataset();
-  }, []);
+  }, [dataset]);
 
   const loadDataset = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/load-intent-data`);
+      setIsLoading(true);
+      setError(null);
+
+      // Build URL with query params
+      const baseUrl = `${API_BASE}/api/load-intent-data`;
+      const params = new URLSearchParams();
+      params.append('dataset', dataset);
+
+      const response = await fetch(`${baseUrl}?${params.toString()}`);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -29,6 +53,9 @@ function App() {
 
       const data = await response.json();
       setRows(data.rows);
+
+      // Save to localStorage
+      localStorage.setItem(DATASET_STORAGE_KEY, dataset);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -52,7 +79,12 @@ function App() {
 
       try {
         console.log('Refreshing dataset from Hugging Face...');
-        const response = await fetch(`${API_BASE}/api/load-intent-data?refresh=true`);
+        const baseUrl = `${API_BASE}/api/load-intent-data`;
+        const params = new URLSearchParams();
+        params.append('dataset', dataset);
+        params.append('refresh', 'true');
+
+        const response = await fetch(`${baseUrl}?${params.toString()}`);
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -105,6 +137,11 @@ function App() {
     });
   };
 
+  const handleDatasetChange = (newDataset: string) => {
+    setDataset(newDataset);
+    // loadDataset will be called automatically due to useEffect dependency
+  };
+
   if (isLoading) {
     return (
       <div className="app">
@@ -143,6 +180,9 @@ function App() {
   return (
     <AnnotationView
       rows={rows}
+      dataset={dataset}
+      isLoadingDataset={isLoading}
+      onDatasetChange={handleDatasetChange}
       onAnnotationComplete={handleAnnotationComplete}
       onRefreshDataset={refreshDataset}
       onUpdateRow={handleUpdateRow}

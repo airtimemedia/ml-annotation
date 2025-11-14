@@ -4,7 +4,7 @@
   "installCommand": "echo 'Handled in buildCommand'",
   "functions": {
     "api/**": {
-      "excludeFiles": "{scripts/**,**/__pycache__/**,**/*.pyc,**/*.pyo,**/*.md,**/.DS_Store,node_modules/**,**/venv/**,**/temp_venv*/**,.vscode/**,.git/**,*.ipynb,README.md,METRICS_ARCHITECTURE.md,.env.example,.gitignore}"
+      "excludeFiles": "{scripts/**,**/__pycache__/**,**/*.pyc,**/*.pyo,**/*.md,**/.DS_Store,node_modules/**,**/venv/**,**/temp_venv*/**,.vscode/**,.git/**,*.ipynb,README.md,METRICS_ARCHITECTURE.md,.env.example,.gitignore,package-lock.json,**/tsconfig*.json,client/src/**}"
     }
   },
   "rewrites": [

@@ -4,6 +4,7 @@ import { FilterState, ReviewStatusFilter } from '../types';
 interface UrlState {
   rowIndex: number | null;
   filters: FilterState;
+  dataset: string | null;
 }
 
 /**
@@ -42,20 +43,30 @@ export function useUrlState() {
       )
     );
 
+    // Parse dataset
+    const dataset = params.get('dataset');
+
     return {
       rowIndex: rowIndex !== null && !isNaN(rowIndex) ? rowIndex : null,
       filters: { prompts, actions, reviewStatus },
+      dataset,
     };
   }, []);
 
   /**
    * Update URL with current state
+   * Order: dataset, row, filters
    */
   const updateUrl = useCallback(
-    (rowIndex: number, filters: FilterState) => {
+    (rowIndex: number, filters: FilterState, dataset?: string) => {
       const params = new URLSearchParams();
 
-      // Add row index
+      // Add dataset first (if provided)
+      if (dataset) {
+        params.set('dataset', dataset);
+      }
+
+      // Add row index second
       params.set('row', rowIndex.toString());
 
       // Add prompt filters (if any)

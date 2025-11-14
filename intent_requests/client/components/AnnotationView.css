@@ -18,17 +18,12 @@
 
 .annotation-view__header-left {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.annotation-view__header h1 {
-  font-size: 2rem;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin: 0;
-  letter-spacing: -0.5px;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .annotation-view__dataset-link {
@@ -121,7 +116,7 @@
   border-radius: 12px;
   white-space: pre-wrap;
   font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
-  height: 500px;
+  height: 600px;
   overflow-y: auto;
   overflow-x: auto;
   color: #1d1d1f;
@@ -203,7 +198,7 @@
   background: #fafafa;
   color: #1d1d1f;
   line-height: 1.6;
-  height: 500px;
+  height: 600px;
   overflow: auto;
   box-sizing: border-box;
 }
