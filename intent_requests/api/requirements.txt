@@ -5,9 +5,8 @@ flask-cors>=4.0.0
 # Hugging Face
 huggingface-hub>=0.19.0
 
-# Data processing (lighter than datasets library)
-pandas>=2.0.0
-pyarrow>=14.0.0
+# HTTP requests
+requests>=2.31.0
 
 # Environment variables
 python-dotenv>=1.0.0
