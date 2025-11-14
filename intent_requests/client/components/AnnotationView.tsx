@@ -34,6 +34,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
   const [filter, setFilter] = useState<FilterState>({
     prompts: new Set(),
     actions: new Set(),
+    reviewStatus: new Set(),
   });
 
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -114,7 +115,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter.prompts, filter.actions, filteredRows, rows]);
+  }, [filter.prompts.size, filter.actions.size, filter.reviewStatus.size, filteredRows, rows]);
 
   // Update edited fields when current row changes
   useEffect(() => {
@@ -127,13 +128,8 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
     }
   }, [currentFilteredIndex, currentRow]);
 
-  if (!currentRow) {
-    return (
-      <div className="annotation-view__empty">
-        <p>No data to annotate</p>
-      </div>
-    );
-  }
+  // Don't render main panel if no rows match filters, but keep the rest of the UI
+  const hasFilteredRows = filteredRows.length > 0;
 
   const hasUnsavedChanges = () => {
     if (!currentRow) return false;
@@ -291,15 +287,24 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
       const newPrompts = new Set(filter.prompts);
       newPrompts.delete(value);
       setFilter({
+        ...filter,
         prompts: newPrompts,
-        actions: filter.actions,
       });
     } else if (type === 'action') {
       const newActions = new Set(filter.actions);
       newActions.delete(value);
       setFilter({
-        prompts: filter.prompts,
+        ...filter,
         actions: newActions,
+      });
+    } else if (type === 'reviewStatus') {
+      const newReviewStatus = new Set(filter.reviewStatus);
+      // Convert display label back to filter value
+      const filterValue = value === 'Reviewed' ? 'reviewed' : 'not-reviewed';
+      newReviewStatus.delete(filterValue as ReviewStatusFilter);
+      setFilter({
+        ...filter,
+        reviewStatus: newReviewStatus,
       });
     }
   };
@@ -308,6 +313,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
     setFilter({
       prompts: new Set(),
       actions: new Set(),
+      reviewStatus: new Set(),
     });
   };
 
@@ -360,11 +366,23 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
           </a>
         </div>
         <div className="annotation-view__header-right">
-          <JumpControl
-            totalRows={rows.length}
-            currentRow={currentOriginalIndex}
-            onJumpTo={handleJumpTo}
-          />
+          {hasFilteredRows && (
+            <>
+              <span className="annotation-view__filter-count">
+                Showing {filteredRows.length} of {rows.length} rows
+              </span>
+              <JumpControl
+                totalRows={rows.length}
+                currentRow={currentOriginalIndex}
+                onJumpTo={handleJumpTo}
+              />
+            </>
+          )}
+          {!hasFilteredRows && (
+            <span className="annotation-view__filter-count">
+              No rows match filters (0 of {rows.length})
+            </span>
+          )}
         </div>
       </header>
 
@@ -378,7 +396,8 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
         onClearAll={handleClearAllFilters}
       />
 
-      <div className="annotation-view__main-panel">
+      {hasFilteredRows && (
+        <div className="annotation-view__main-panel">
         <div className="annotation-view__content">
           <div className="annotation-view__request-section">
             <h3 className="annotation-view__subsection-title">Input</h3>
@@ -451,8 +470,10 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
           </button>
         </div>
       </div>
+      )}
 
-      <NavigationControls
+      {hasFilteredRows && (
+        <NavigationControls
         currentIndex={currentOriginalIndex}
         totalRows={rows.length}
         rows={rows}
@@ -461,6 +482,7 @@ export function AnnotationView({ rows, onAnnotationComplete, onRefreshDataset, o
         reviewedRows={reviewedRows}
         filter={filter}
       />
+      )}
 
       <UnsavedChangesModal
         isOpen={showUnsavedModal}

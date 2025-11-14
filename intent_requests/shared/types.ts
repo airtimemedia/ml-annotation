@@ -30,15 +30,18 @@ export interface DatasetMetrics {
   actionCounts: Record<string, number>;
 }
 
-export type FilterType = 'prompt' | 'action';
+export type FilterType = 'prompt' | 'action' | 'reviewStatus';
+
+export type ReviewStatusFilter = 'reviewed' | 'not-reviewed';
 
 export interface FilterState {
   prompts: Set<string>;
   actions: Set<string>;
+  reviewStatus: Set<ReviewStatusFilter>;
 }
 
 export function hasActiveFilters(filter: FilterState): boolean {
-  return filter.prompts.size > 0 || filter.actions.size > 0;
+  return filter.prompts.size > 0 || filter.actions.size > 0 || filter.reviewStatus.size > 0;
 }
 
 export interface FilteredRowsResult {

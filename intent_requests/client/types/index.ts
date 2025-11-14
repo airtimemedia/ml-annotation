@@ -6,6 +6,7 @@ export type {
   ParsedOutput,
   DatasetMetrics,
   FilteredRowsResult,
+  ReviewStatusFilter,
 } from '../../shared/types.js';
 
 export { hasActiveFilters } from '../../shared/types.js';

@@ -28,7 +28,7 @@ export function NavigationControls({
   // Reset visible count when filters change
   useEffect(() => {
     setVisibleCount(20);
-  }, [filter.prompts, filter.actions]);
+  }, [filter.prompts.size, filter.actions.size, filter.reviewStatus.size]);
 
   const getActionType = (row: DatasetRow): string => {
     const cached = parsedCache.get(row)!;
@@ -53,6 +53,21 @@ export function NavigationControls({
     if (matches && filter.actions.size > 0) {
       const actionType = getActionType(row);
       if (!filter.actions.has(actionType)) {
+        matches = false;
+      }
+    }
+
+    // Check review status filter (if any review status filters are active)
+    if (matches && filter.reviewStatus.size > 0) {
+      const reviewedValue = row.manually_reviewed;
+      const isReviewed = reviewedValue === true;
+
+      // Row must match at least one of the selected review statuses
+      const matchesReviewStatus =
+        (filter.reviewStatus.has('reviewed') && isReviewed) ||
+        (filter.reviewStatus.has('not-reviewed') && !isReviewed);
+
+      if (!matchesReviewStatus) {
         matches = false;
       }
     }

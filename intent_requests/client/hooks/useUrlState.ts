@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { FilterState } from '../types';
+import { FilterState, ReviewStatusFilter } from '../types';
 
 interface UrlState {
   rowIndex: number | null;
@@ -33,9 +33,18 @@ export function useUrlState() {
       actionsParam ? actionsParam.split(',').filter(Boolean) : []
     );
 
+    // Parse review status filter
+    const reviewStatusParam = params.get('reviewStatus');
+    const reviewStatusArray = reviewStatusParam ? reviewStatusParam.split(',').filter(Boolean) : [];
+    const reviewStatus = new Set<ReviewStatusFilter>(
+      reviewStatusArray.filter((s): s is ReviewStatusFilter =>
+        s === 'reviewed' || s === 'not-reviewed'
+      )
+    );
+
     return {
       rowIndex: rowIndex !== null && !isNaN(rowIndex) ? rowIndex : null,
-      filters: { prompts, actions },
+      filters: { prompts, actions, reviewStatus },
     };
   }, []);
 
@@ -57,6 +66,11 @@ export function useUrlState() {
       // Add action filters (if any)
       if (filters.actions.size > 0) {
         params.set('actions', Array.from(filters.actions).join(','));
+      }
+
+      // Add review status filters (if any)
+      if (filters.reviewStatus.size > 0) {
+        params.set('reviewStatus', Array.from(filters.reviewStatus).join(','));
       }
 
       // Update URL without reloading page

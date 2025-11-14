@@ -1,5 +1,5 @@
 import { useState, memo } from 'react';
-import { DatasetRow, FilterState, FilterType } from '../types';
+import { DatasetRow, FilterState, FilterType, ReviewStatusFilter } from '../types';
 import { useDatasetMetrics } from '../hooks/useDatasetMetrics';
 import { FilterBadgeList } from './FilterBadgeList';
 import type { ParsedRowData } from '../hooks/useParsedRowCache';
@@ -34,8 +34,8 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
     }
 
     onFilterChange({
+      ...filter,
       prompts: newPrompts,
-      actions: filter.actions,
     });
   };
 
@@ -50,9 +50,29 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
     }
 
     onFilterChange({
-      prompts: filter.prompts,
+      ...filter,
       actions: newActions,
     });
+  };
+
+  const handleReviewStatusClick = (status: ReviewStatusFilter) => {
+    const newReviewStatus = new Set(filter.reviewStatus);
+
+    // Toggle: if status is active, remove it; otherwise add it
+    if (newReviewStatus.has(status)) {
+      newReviewStatus.delete(status);
+    } else {
+      newReviewStatus.add(status);
+    }
+
+    onFilterChange({
+      ...filter,
+      reviewStatus: newReviewStatus,
+    });
+  };
+
+  const isReviewStatusActive = (status: ReviewStatusFilter) => {
+    return filter.reviewStatus.has(status);
   };
 
   const isPromptActive = (promptName: string) => {
@@ -158,6 +178,26 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
               ) : (
                 <div className="breakdown-empty">No actions found in outputs</div>
               )}
+            </div>
+
+            <div className="metrics-panel__section">
+              <h4 className="metrics-panel__subtitle">Review Status</h4>
+              <div className="breakdown-list">
+                <div
+                  className={`breakdown-item ${isReviewStatusActive('reviewed') ? 'breakdown-item--active' : ''}`}
+                  onClick={() => handleReviewStatusClick('reviewed')}
+                >
+                  <span className="breakdown-item__name">Reviewed</span>
+                  <span className="breakdown-item__count">{metrics.reviewedCount}</span>
+                </div>
+                <div
+                  className={`breakdown-item ${isReviewStatusActive('not-reviewed') ? 'breakdown-item--active' : ''}`}
+                  onClick={() => handleReviewStatusClick('not-reviewed')}
+                >
+                  <span className="breakdown-item__name">Not Reviewed</span>
+                  <span className="breakdown-item__count">{metrics.totalRows - metrics.reviewedCount}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

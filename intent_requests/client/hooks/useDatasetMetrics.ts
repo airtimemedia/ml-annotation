@@ -33,6 +33,7 @@ export function useDatasetMetrics(
     const uniqueActionsSet = new Set<string>();
     const uniquePromptsSet = new Set<string>();
     let invalidOutputCount = 0;
+    let actualReviewedCount = 0;
 
     // Single pass through indexed data
     for (const data of indexedData) {
@@ -54,10 +55,16 @@ export function useDatasetMetrics(
         invalidOutputCount++;
         parseErrorIndices.push(index);
       }
+
+      // Count actually reviewed rows (from dataset, not session)
+      const reviewedValue = row.manually_reviewed;
+      if (reviewedValue === true) {
+        actualReviewedCount++;
+      }
     }
 
     const totalRows = rows.length;
-    const reviewedCount = reviewedRows.size;
+    const reviewedCount = actualReviewedCount;
     const remainingCount = totalRows - reviewedCount;
     const progressPercent = totalRows > 0 ? Math.round((reviewedCount / totalRows) * 100) : 0;
 
@@ -75,7 +82,7 @@ export function useDatasetMetrics(
         parseErrorIndices,
       },
     };
-  }, [indexedData, reviewedRows]);
+  }, [indexedData]);
 
   return metrics;
 }

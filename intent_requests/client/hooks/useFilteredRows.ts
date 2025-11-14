@@ -46,6 +46,21 @@ export function useFilteredRows(
         }
       }
 
+      // Check review status filter (if any review status filters are active)
+      if (matches && filter.reviewStatus.size > 0) {
+        const reviewedValue = row.manually_reviewed;
+        const isReviewed = reviewedValue === true;
+
+        // Row must match at least one of the selected review statuses
+        const matchesReviewStatus =
+          (filter.reviewStatus.has('reviewed') && isReviewed) ||
+          (filter.reviewStatus.has('not-reviewed') && !isReviewed);
+
+        if (!matchesReviewStatus) {
+          matches = false;
+        }
+      }
+
       if (matches) {
         filtered.push({ row, originalIndex });
       }
@@ -76,5 +91,5 @@ export function useFilteredRows(
       mapFilteredToOriginal,
       mapOriginalToFiltered,
     };
-  }, [rows, filter.prompts, filter.actions, parsedCache]);
+  }, [rows, filter.prompts, filter.actions, filter.reviewStatus, parsedCache]);
 }

@@ -210,6 +210,13 @@
   background: #b8b8bd;
 }
 
+@media (max-width: 1024px) {
+  .metrics-panel__breakdown {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 @media (max-width: 768px) {
   .metrics-panel {
     padding: 1.25rem 1.5rem;
@@ -221,11 +228,6 @@
 
   .metrics-panel__title {
     font-size: 1.25rem;
-  }
-
-  .metrics-panel__breakdown {
-    grid-template-columns: 1fr;
-    gap: 1rem;
   }
 
   .breakdown-list {
