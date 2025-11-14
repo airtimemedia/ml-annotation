@@ -1,6 +1,7 @@
 import os
 import threading
-from datasets import load_dataset
+import pandas as pd
+from huggingface_hub import hf_hub_download, HfApi
 from typing import List, Dict, Any, Optional
 
 
@@ -27,14 +28,20 @@ class DatasetService:
             return self.cache
 
         print(f"{'Refreshing' if force_refresh else 'Loading'} from Hugging Face...")
-        dataset = load_dataset(
-            self.dataset_repo,
-            split="train",
+
+        # Download the parquet file from HuggingFace
+        parquet_path = hf_hub_download(
+            repo_id=self.dataset_repo,
+            filename="data/train-00000-of-00001.parquet",
+            repo_type="dataset",
             token=self.hf_token
         )
 
-        # Convert to list of dicts and transform column names
-        self.cache = [self._transform_row(dict(row)) for row in dataset]
+        # Read with pandas
+        df = pd.read_parquet(parquet_path)
+
+        # Convert to list of dicts
+        self.cache = [self._transform_row(row) for row in df.to_dict('records')]
         print(f"Loaded {len(self.cache)} rows into memory")
         return self.cache
 
@@ -54,12 +61,20 @@ class DatasetService:
         def _load_in_background():
             try:
                 print(f"Background: {'Refreshing' if force_refresh else 'Loading'} from Hugging Face...")
-                dataset = load_dataset(
-                    self.dataset_repo,
-                    split="train",
+
+                # Download the parquet file from HuggingFace
+                parquet_path = hf_hub_download(
+                    repo_id=self.dataset_repo,
+                    filename="data/train-00000-of-00001.parquet",
+                    repo_type="dataset",
                     token=self.hf_token
                 )
-                new_cache = [self._transform_row(dict(row)) for row in dataset]
+
+                # Read with pandas
+                df = pd.read_parquet(parquet_path)
+
+                # Convert to list of dicts
+                new_cache = [self._transform_row(row) for row in df.to_dict('records')]
 
                 with self._loading_lock:
                     self.cache = new_cache
@@ -102,16 +117,36 @@ class DatasetService:
         if not self.cache:
             raise ValueError("No data to push")
 
-        from datasets import Dataset
+        import tempfile
+        from huggingface_hub import CommitOperationAdd
 
         print(f"Pushing {len(self.cache)} rows to Hugging Face...")
-        dataset = Dataset.from_list(self.cache)
-        dataset.push_to_hub(
-            self.dataset_repo,
-            commit_message=commit_message,
-            token=self.hf_token
-        )
-        print(f"Successfully pushed to Hugging Face")
+
+        # Convert to pandas DataFrame
+        df = pd.DataFrame(self.cache)
+
+        # Write to temporary parquet file
+        with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as tmp:
+            df.to_parquet(tmp.name, index=False)
+            tmp_path = tmp.name
+
+        try:
+            # Upload using HuggingFace Hub API
+            api = HfApi()
+            api.upload_file(
+                path_or_fileobj=tmp_path,
+                path_in_repo="data/train-00000-of-00001.parquet",
+                repo_id=self.dataset_repo,
+                repo_type="dataset",
+                token=self.hf_token,
+                commit_message=commit_message
+            )
+            print(f"Successfully pushed to Hugging Face")
+        finally:
+            # Clean up temp file
+            import os
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
 
 
 # Global instance - lazy initialized

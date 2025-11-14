@@ -4,7 +4,7 @@
   "installCommand": "echo 'Handled in buildCommand'",
   "functions": {
     "api/**": {
-      "excludeFiles": "{scripts/**,server/app/__pycache__/**,**/*.pyc,**/*.pyo,**/*.md,**/.DS_Store}"
+      "excludeFiles": "{scripts/**,server/app/__pycache__/**,**/*.pyc,**/*.pyo,**/*.md,**/.DS_Store,client/**,venv/**,.vscode/**,.git/**}"
     }
   },
   "rewrites": [
