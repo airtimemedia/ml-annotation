@@ -6,42 +6,20 @@ dataset_bp = Blueprint("dataset", __name__)
 
 @dataset_bp.route("/load-intent-data", methods=["GET"])
 def load_dataset():
-    """Load dataset from cache or Hugging Face"""
+    """Load dataset from Hugging Face (always fresh to avoid user data leaking)"""
     try:
         refresh = request.args.get("refresh", "false").lower() == "true"
         dataset_service = get_dataset_service()
 
-        if refresh:
-            # Start background refresh, return current cache immediately
-            started = dataset_service.load_async(force_refresh=True)
+        # Always load fresh data (no shared cache between users)
+        rows = dataset_service.load(force_refresh=refresh)
 
-            if dataset_service.cache:
-                # Return current cache while refresh happens in background
-                return jsonify({
-                    "success": True,
-                    "rows": dataset_service.cache,
-                    "count": len(dataset_service.cache),
-                    "source": "cache",
-                    "refreshing": started
-                })
-            else:
-                # No cache yet, must load synchronously
-                rows = dataset_service.load(force_refresh=True)
-                return jsonify({
-                    "success": True,
-                    "rows": rows,
-                    "count": len(rows),
-                    "source": "huggingface"
-                })
-        else:
-            # Normal load (use cache if available, otherwise load synchronously)
-            rows = dataset_service.load(force_refresh=False)
-            return jsonify({
-                "success": True,
-                "rows": rows,
-                "count": len(rows),
-                "source": "cache" if dataset_service.cache else "huggingface"
-            })
+        return jsonify({
+            "success": True,
+            "rows": rows,
+            "count": len(rows),
+            "source": "huggingface"
+        })
     except Exception as e:
         return jsonify({
             "error": "Failed to load dataset",
@@ -51,13 +29,13 @@ def load_dataset():
 
 @dataset_bp.route("/dataset-status", methods=["GET"])
 def dataset_status():
-    """Check if dataset is currently loading"""
+    """Dataset status endpoint (kept for compatibility)"""
     try:
-        dataset_service = get_dataset_service()
+        # No background loading anymore - always returns ready
         return jsonify({
-            "loading": dataset_service.is_loading(),
-            "cached": dataset_service.cache is not None,
-            "count": len(dataset_service.cache) if dataset_service.cache else 0
+            "loading": False,
+            "cached": False,  # No cache - always loads fresh
+            "count": 0  # Unknown until loaded
         })
     except Exception as e:
         return jsonify({

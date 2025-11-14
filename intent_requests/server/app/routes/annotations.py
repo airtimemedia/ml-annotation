@@ -22,13 +22,10 @@ def save_annotation():
                 "error": "Missing prompt_name in annotation"
             }), 400
 
-        # Update the row in cache
+        # Load fresh data, update the row, and push to Hugging Face
+        # This ensures no shared state between users
         dataset_service = get_dataset_service()
-        dataset_service.update_row(annotation)
-
-        # Push to Hugging Face immediately
-        commit_message = f"Update annotations: {prompt_name}"
-        dataset_service.push_to_hub(commit_message)
+        dataset_service.update_and_push(annotation)
 
         return jsonify({
             "success": True,

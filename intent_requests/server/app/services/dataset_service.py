@@ -1,20 +1,20 @@
 import os
-import threading
 import tempfile
 import pyarrow.parquet as pq
 import pyarrow as pa
 from huggingface_hub import hf_hub_download, HfApi
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
+
+# Configure HuggingFace to use /tmp for caching (Vercel serverless requirement)
+os.environ.setdefault("HF_HOME", "/tmp/huggingface")
+os.environ.setdefault("HUGGINGFACE_HUB_CACHE", "/tmp/huggingface/hub")
 
 
 class DatasetService:
     def __init__(self):
-        self.cache: Optional[List[Dict[str, Any]]] = None
+        # No in-memory cache - always load fresh to avoid user data leaking between requests
         self.hf_token = os.environ.get("HUGGINGFACE_TOKEN")
         self.dataset_repo = "Cantina/intent-full-data-20251106"
-        self._loading_lock = threading.Lock()
-        self._is_loading = False
-        self._load_thread: Optional[threading.Thread] = None
 
         if not self.hf_token:
             raise ValueError("HUGGINGFACE_TOKEN environment variable is required")
@@ -24,19 +24,19 @@ class DatasetService:
         return dict(row)
 
     def load(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
-        """Load dataset from cache or Hugging Face (blocking)"""
-        if self.cache and not force_refresh:
-            print(f"Loading from memory cache ({len(self.cache)} rows)")
-            return self.cache
-
-        print(f"{'Refreshing' if force_refresh else 'Loading'} from Hugging Face...")
+        """Load dataset from Hugging Face (always fresh to avoid user data leaking)"""
+        print(f"Loading from Hugging Face...")
 
         # Download parquet file from HuggingFace
+        # The file is cached in /tmp/huggingface/hub for performance (read-only cache)
+        # but we don't keep an in-memory cache to avoid sharing data between users
         parquet_path = hf_hub_download(
             repo_id=self.dataset_repo,
             filename="data/train-00000-of-00001.parquet",
             repo_type="dataset",
-            token=self.hf_token
+            token=self.hf_token,
+            cache_dir="/tmp/huggingface/hub",
+            force_download=force_refresh  # Re-download if force_refresh is True
         )
 
         # Read parquet file with pyarrow (no pandas needed)
@@ -46,92 +46,49 @@ class DatasetService:
         data_list = table.to_pylist()
 
         # Transform rows
-        self.cache = [self._transform_row(row) for row in data_list]
-        print(f"Loaded {len(self.cache)} rows into memory")
-        return self.cache
+        rows = [self._transform_row(row) for row in data_list]
+        print(f"Loaded {len(rows)} rows from Hugging Face")
+        return rows
 
-    def load_async(self, force_refresh: bool = False) -> bool:
-        """Start loading dataset in background thread. Returns True if started, False if already loading."""
-        with self._loading_lock:
-            if self._is_loading:
-                print("Dataset already loading in background")
-                return False
+    # Removed async loading methods to prevent shared state between users
 
-            if self.cache and not force_refresh:
-                print(f"Using cached dataset ({len(self.cache)} rows)")
-                return False
-
-            self._is_loading = True
-
-        def _load_in_background():
-            try:
-                print(f"Background: {'Refreshing' if force_refresh else 'Loading'} from Hugging Face...")
-
-                # Download parquet file from HuggingFace
-                parquet_path = hf_hub_download(
-                    repo_id=self.dataset_repo,
-                    filename="data/train-00000-of-00001.parquet",
-                    repo_type="dataset",
-                    token=self.hf_token
-                )
-
-                # Read parquet file with pyarrow
-                table = pq.read_table(parquet_path)
-
-                # Convert to list of dicts
-                data_list = table.to_pylist()
-
-                # Transform rows
-                new_cache = [self._transform_row(row) for row in data_list]
-
-                with self._loading_lock:
-                    self.cache = new_cache
-                    self._is_loading = False
-                    print(f"Background: Loaded {len(self.cache)} rows into memory")
-            except Exception as e:
-                with self._loading_lock:
-                    self._is_loading = False
-                print(f"Background: Error loading dataset: {e}")
-
-        self._load_thread = threading.Thread(target=_load_in_background, daemon=True)
-        self._load_thread.start()
-        return True
-
-    def is_loading(self) -> bool:
-        """Check if dataset is currently being loaded in background"""
-        with self._loading_lock:
-            return self._is_loading
-
-    def update_row(self, row_data: Dict[str, Any]) -> None:
-        """Update a single row in the cache"""
-        if not self.cache:
-            raise ValueError("Dataset not loaded")
-
+    def update_and_push(self, row_data: Dict[str, Any]) -> None:
+        """Load fresh data, update a single row, and push to Hugging Face"""
         prompt_name = row_data.get("prompt_name")
         if not prompt_name:
             raise ValueError("prompt_name is required")
 
-        # Find and update the row (cache uses new column names)
-        for i, row in enumerate(self.cache):
+        # Load fresh data from Hugging Face (no shared cache)
+        print(f"Loading fresh data to update row: {prompt_name}")
+        rows = self.load(force_refresh=False)
+
+        # Find and update the row
+        updated = False
+        for i, row in enumerate(rows):
             if row["prompt_name"] == prompt_name:
-                self.cache[i].update(row_data)
-                print(f"Updated row in cache: {prompt_name}")
-                return
+                rows[i].update(row_data)
+                print(f"Updated row: {prompt_name}")
+                updated = True
+                break
 
-        raise ValueError(f"Row not found: {prompt_name}")
+        if not updated:
+            raise ValueError(f"Row not found: {prompt_name}")
 
-    def push_to_hub(self, commit_message: str) -> None:
-        """Push the current cache to Hugging Face"""
-        if not self.cache:
+        # Push updated data to Hugging Face
+        self._push_data_to_hub(rows, f"Update annotations: {prompt_name}")
+
+    def _push_data_to_hub(self, rows: List[Dict[str, Any]], commit_message: str) -> None:
+        """Push data to Hugging Face (internal method)"""
+        if not rows:
             raise ValueError("No data to push")
 
-        print(f"Pushing {len(self.cache)} rows to Hugging Face...")
+        print(f"Pushing {len(rows)} rows to Hugging Face...")
 
         # Convert to PyArrow Table
-        table = pa.Table.from_pylist(self.cache)
+        table = pa.Table.from_pylist(rows)
 
-        # Write to temporary parquet file
-        with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as tmp:
+        # Write to temporary parquet file in /tmp (Vercel serverless requirement)
+        with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False, dir='/tmp') as tmp:
             tmp_path = tmp.name
 
         try:
@@ -155,11 +112,6 @@ class DatasetService:
                 os.unlink(tmp_path)
 
 
-# Global instance - lazy initialized
-_dataset_service_instance = None
-
 def get_dataset_service() -> DatasetService:
-    global _dataset_service_instance
-    if _dataset_service_instance is None:
-        _dataset_service_instance = DatasetService()
-    return _dataset_service_instance
+    """Create a new DatasetService instance (no singleton to avoid shared state)"""
+    return DatasetService()
