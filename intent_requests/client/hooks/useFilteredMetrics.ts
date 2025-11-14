@@ -39,7 +39,9 @@ export function useFilteredMetrics(
     ): boolean => {
       // Check prompt filter (unless excluded)
       if (excludeType !== 'prompt' && filter.prompts.size > 0) {
-        if (!filter.prompts.has(row.prompt_name)) {
+        // Normalize null/undefined prompt names to empty string
+        const promptName = row.prompt_name ?? '';
+        if (!filter.prompts.has(promptName)) {
           return false;
         }
       }
@@ -71,7 +73,8 @@ export function useFilteredMetrics(
     // Single pass through all rows
     rows.forEach((row) => {
       const cached = parsedCache.get(row)!;
-      const promptName = row.prompt_name;
+      // Normalize null/undefined prompt names to empty string
+      const promptName = row.prompt_name ?? '';
       const actionType = (!cached.parseError && cached.parsedOutput?.action)
         ? cached.parsedOutput.action
         : 'invalid';

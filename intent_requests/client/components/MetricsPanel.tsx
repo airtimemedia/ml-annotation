@@ -128,8 +128,8 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
                       className={`breakdown-item ${isPromptActive(prompt) ? 'breakdown-item--active' : ''}`}
                       onClick={() => handlePromptClick(prompt)}
                     >
-                      <span className="breakdown-item__name" title={prompt}>
-                        {prompt}
+                      <span className="breakdown-item__name" title={prompt || '(empty)'}>
+                        {prompt || '(empty)'}
                       </span>
                       <span className="breakdown-item__count">
                         {count.filtered} / {count.total}

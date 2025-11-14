@@ -44,7 +44,9 @@ export function NavigationControls({
 
     // Check prompt filters (if any)
     if (filter.prompts.size > 0) {
-      if (!filter.prompts.has(row.prompt_name)) {
+      // Normalize null/undefined prompt names to empty string
+      const promptName = row.prompt_name ?? '';
+      if (!filter.prompts.has(promptName)) {
         matches = false;
       }
     }
