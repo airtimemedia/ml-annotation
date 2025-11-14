@@ -83,6 +83,66 @@
   gap: 2rem;
 }
 
+.annotation-view__clone-banner {
+  background: linear-gradient(135deg, #fff9e6 0%, #fff5d9 100%);
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.annotation-view__clone-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.annotation-view__clone-banner-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.annotation-view__clone-banner-text {
+  flex: 1;
+  color: #856404;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.annotation-view__clone-banner-text strong {
+  color: #664d03;
+}
+
+.annotation-view__clone-banner-close {
+  background: #664d03;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.annotation-view__clone-banner-close:hover {
+  background: #523d02;
+  transform: translateY(-1px);
+}
+
 .annotation-view__content {
   display: grid;
   grid-template-columns: 1fr 1fr;

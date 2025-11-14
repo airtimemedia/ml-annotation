@@ -40,6 +40,55 @@ def save_annotation():
         }), 500
 
 
+@annotations_bp.route("/create-intent-row", methods=["POST"])
+def create_intent_row():
+    """Create a new row in the dataset (for cloning functionality)"""
+    try:
+        data = request.get_json()
+        if not data or "row" not in data:
+            return jsonify({
+                "error": "Missing row data in request body"
+            }), 400
+
+        row_data = data["row"]
+        dataset_repo = data.get("dataset", "Cantina/intent-full-data-20251106")
+
+        # Validate required fields
+        if not row_data.get("prompt_name"):
+            return jsonify({
+                "error": "Missing prompt_name in row data"
+            }), 400
+        if not row_data.get("input"):
+            return jsonify({
+                "error": "Missing input in row data"
+            }), 400
+        if not row_data.get("output"):
+            return jsonify({
+                "error": "Missing output in row data"
+            }), 400
+
+        # Load fresh data, append the new row, and push to Hugging Face
+        dataset_service = get_dataset_service(dataset_repo=dataset_repo)
+        rows = dataset_service.load(force_refresh=False)
+
+        # Add the new row
+        rows.append(row_data)
+
+        # Push updated data to Hugging Face
+        dataset_service._push_data_to_hub(rows, f"Add cloned row: {row_data.get('prompt_name')}")
+
+        return jsonify({
+            "success": True,
+            "message": "Row created successfully",
+            "dataset": dataset_repo
+        })
+    except Exception as e:
+        return jsonify({
+            "error": "Failed to create row",
+            "message": str(e)
+        }), 500
+
+
 @annotations_bp.route("/flush-annotations", methods=["POST"])
 def flush_annotations():
     """Flush any pending annotations (kept for compatibility, but not needed now)"""
