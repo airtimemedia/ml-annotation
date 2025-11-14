@@ -1,6 +1,6 @@
 import { useState, memo } from 'react';
 import { DatasetRow, FilterState, FilterType, ReviewStatusFilter } from '../types';
-import { useDatasetMetrics } from '../hooks/useDatasetMetrics';
+import { useFilteredMetrics } from '../hooks/useFilteredMetrics';
 import { FilterBadgeList } from './FilterBadgeList';
 import type { ParsedRowData } from '../hooks/useParsedRowCache';
 import './MetricsPanel.css';
@@ -20,8 +20,8 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
   const [showAllPrompts, setShowAllPrompts] = useState(false);
   const [showAllActions, setShowAllActions] = useState(false);
 
-  // Use optimized metrics hook
-  const metrics = useDatasetMetrics(rows, reviewedRows, parsedCache);
+  // Use filtered metrics hook that shows both total and filtered counts
+  const metrics = useFilteredMetrics(rows, filter, parsedCache);
 
   const handlePromptClick = (promptName: string) => {
     const newPrompts = new Set(filter.prompts);
@@ -120,7 +120,7 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
               <h4 className="metrics-panel__subtitle">Prompts</h4>
               <div className="breakdown-list">
                 {Object.entries(metrics.promptCounts)
-                  .sort(([, a], [, b]) => b - a)
+                  .sort(([, a], [, b]) => b.total - a.total)
                   .slice(0, showAllPrompts ? undefined : 20)
                   .map(([prompt, count]) => (
                     <div
@@ -131,7 +131,9 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
                       <span className="breakdown-item__name" title={prompt}>
                         {prompt}
                       </span>
-                      <span className="breakdown-item__count">{count}</span>
+                      <span className="breakdown-item__count">
+                        {count.filtered} / {count.total}
+                      </span>
                     </div>
                   ))}
               </div>
@@ -151,7 +153,7 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
                 <>
                   <div className="breakdown-list">
                     {Object.entries(metrics.actionCounts)
-                      .sort(([, a], [, b]) => b - a)
+                      .sort(([, a], [, b]) => b.total - a.total)
                       .slice(0, showAllActions ? undefined : 20)
                       .map(([action, count]) => (
                         <div
@@ -162,7 +164,9 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
                           <span className="breakdown-item__name" title={action}>
                             {action}
                           </span>
-                          <span className="breakdown-item__count">{count}</span>
+                          <span className="breakdown-item__count">
+                            {count.filtered} / {count.total}
+                          </span>
                         </div>
                       ))}
                   </div>
@@ -188,14 +192,18 @@ export const MetricsPanel = memo(function MetricsPanel({ rows, reviewedRows, fil
                   onClick={() => handleReviewStatusClick('reviewed')}
                 >
                   <span className="breakdown-item__name">Reviewed</span>
-                  <span className="breakdown-item__count">{metrics.reviewedCount}</span>
+                  <span className="breakdown-item__count">
+                    {metrics.reviewedCount.filtered} / {metrics.reviewedCount.total}
+                  </span>
                 </div>
                 <div
                   className={`breakdown-item ${isReviewStatusActive('not-reviewed') ? 'breakdown-item--active' : ''}`}
                   onClick={() => handleReviewStatusClick('not-reviewed')}
                 >
                   <span className="breakdown-item__name">Not Reviewed</span>
-                  <span className="breakdown-item__count">{metrics.totalRows - metrics.reviewedCount}</span>
+                  <span className="breakdown-item__count">
+                    {metrics.notReviewedCount.filtered} / {metrics.notReviewedCount.total}
+                  </span>
                 </div>
               </div>
             </div>
