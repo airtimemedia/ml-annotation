@@ -571,6 +571,27 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
               value={editedInput}
               onChange={(e) => setEditedInput(e.target.value)}
               className="annotation-view__textarea"
+              placeholder={`ROOM MEMBERS:
+[
+  {
+    "user_name": "Ravi",
+    "full_name": "Ravi"
+  },
+  ...
+]
+
+
+CHAT HISTORY:
+Username: ...
+...
+
+
+LAST MESSAGE:
+Username: ...
+
+
+OUTPUT:
+`}
               spellCheck={false}
             />
           </div>
@@ -584,7 +605,12 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
                 value={editedOutput}
                 onChange={(e) => setEditedOutput(e.target.value)}
                 className="annotation-view__textarea"
-                placeholder='{"action": "...", "requester": "...", "requested_users": [...], "action_metadata": {...}}'
+                placeholder={`{
+  "action": "...",
+  "requester": "...",
+  "requested_users": [...],
+  "action_metadata": {...}
+}`}
                 spellCheck={false}
               />
             </div>
