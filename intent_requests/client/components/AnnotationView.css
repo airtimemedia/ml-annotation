@@ -231,7 +231,7 @@
 
 .annotation-view__content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.3fr 1fr;
   gap: 1.5rem;
 }
 
@@ -474,23 +474,23 @@
   transform: translateY(0);
 }
 
-/* Clone button - Balanced green */
+/* Clone button - Balanced purple */
 .btn-clone {
-  background: #52b573;
+  background: #8b7ab8;
   color: white;
-  box-shadow: 0 1px 3px rgba(82, 181, 115, 0.3);
+  box-shadow: 0 1px 3px rgba(139, 122, 184, 0.3);
   border: none;
   letter-spacing: -0.01em;
 }
 
 .btn-clone:not(:disabled):hover {
-  background: #47a665;
-  box-shadow: 0 2px 6px rgba(82, 181, 115, 0.35);
+  background: #7d6ba8;
+  box-shadow: 0 2px 6px rgba(139, 122, 184, 0.35);
   transform: translateY(-0.5px);
 }
 
 .btn-clone:not(:disabled):active {
-  background: #3d9757;
+  background: #6f5d98;
   transform: translateY(0);
 }
 
