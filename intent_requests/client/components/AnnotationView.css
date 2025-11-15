@@ -230,7 +230,7 @@
 }
 
 .annotation-view__section-title {
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 600;
   margin-top: 0;
   margin-bottom: 1rem;
@@ -240,7 +240,7 @@
 }
 
 .annotation-view__subsection-title {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
@@ -250,6 +250,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  align-self: stretch;
+  width: 100%;
 }
 
 .annotation-view__input-display {
@@ -522,8 +524,6 @@
 }
 
 .annotation-view__reviewed-checkbox {
-  margin-top: 1.25rem;
-  padding: 0.75rem 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -543,22 +543,51 @@
 }
 
 .annotation-view__reviewed-checkbox input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 46px;
+  height: 46px;
   cursor: pointer;
-  accent-color: #007aff;
-  border-radius: 6px;
-  transition: all 0.15s ease;
+  border: 1.5px solid #d2d2d7;
+  border-radius: 10px;
+  background: white;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin: 0;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.annotation-view__reviewed-checkbox input[type="checkbox"]:hover {
+  border-color: #5091cd;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .annotation-view__reviewed-checkbox input[type="checkbox"]:checked {
-  transform: scale(1.05);
+  background: #5091cd;
+  border-color: #5091cd;
+  box-shadow: 0 2px 4px rgba(80, 145, 205, 0.3);
+}
+
+.annotation-view__reviewed-checkbox input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 8px;
+  width: 10px;
+  height: 18px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
 }
 
 .annotation-view__reviewed-checkbox input[type="checkbox"]:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+  box-shadow: 0 0 0 4px rgba(80, 145, 205, 0.15);
+}
+
+.annotation-view__reviewed-checkbox input[type="checkbox"]:active {
+  transform: scale(0.95);
 }
 
 .annotation-view__reviewed-checkbox label span {

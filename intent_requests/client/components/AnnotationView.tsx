@@ -743,7 +743,7 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
         )}
         <div className="annotation-view__content">
           <div className="annotation-view__request-section">
-            <h3 className="annotation-view__subsection-title">Input</h3>
+            <h3 className="annotation-view__section-title">Input</h3>
             <textarea
               ref={inputTextareaRef}
               value={editedInput}
@@ -788,36 +788,38 @@ OUTPUT:
 
           <div className="annotation-view__annotation-section">
             <h3 className="annotation-view__section-title">Output</h3>
-            <div className="annotation-view__field">
-              <textarea
-                ref={outputTextareaRef}
-                id="output"
-                value={editedOutput}
-                onChange={(e) => setEditedOutput(e.target.value)}
-                className="annotation-view__textarea"
-                placeholder={`{
+            <textarea
+              ref={outputTextareaRef}
+              id="output"
+              value={editedOutput}
+              onChange={(e) => setEditedOutput(e.target.value)}
+              className="annotation-view__textarea"
+              placeholder={`{
   "action": "...",
   "requester": "...",
   "requested_users": [...],
   "action_metadata": {...}
 }`}
-                spellCheck={false}
-              />
-            </div>
-            <div className="annotation-view__reviewed-checkbox">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={isManuallyReviewed}
-                  onChange={(e) => setIsManuallyReviewed(e.target.checked)}
-                />
-                <span>Manually Reviewed</span>
-              </label>
-              <span className="annotation-view__reviewed-date">
-                {!isCreateMode && currentRow?.manually_reviewed_ts && currentRow.manually_reviewed_ts !== 0
-                  ? `Last reviewed: ${new Date(currentRow.manually_reviewed_ts).toLocaleString()}`
-                  : ''}
-              </span>
+              spellCheck={false}
+            />
+            <div className="annotation-view__subsection-title">
+              <label htmlFor="manually-reviewed">Manually Reviewed</label>
+              <div className="annotation-view__reviewed-checkbox">
+                <label>
+                  <input
+                    id="manually-reviewed"
+                    type="checkbox"
+                    checked={isManuallyReviewed}
+                    onChange={(e) => setIsManuallyReviewed(e.target.checked)}
+                  />
+                  {/* <span>Mark as reviewed</span> */}
+                </label>
+                <span className="annotation-view__reviewed-date">
+                  {!isCreateMode && currentRow?.manually_reviewed_ts && currentRow.manually_reviewed_ts !== 0
+                    ? `Last reviewed: ${new Date(currentRow.manually_reviewed_ts).toLocaleString()}`
+                    : ''}
+                </span>
+              </div>
             </div>
           </div>
         </div>
