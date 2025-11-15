@@ -192,20 +192,6 @@
   transform: translateY(-1px);
 }
 
-.annotation-view__prompt-field {
-  margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.annotation-view__prompt-field label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #1d1d1f;
-  letter-spacing: -0.2px;
-}
-
 .annotation-view__prompt-input {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -231,7 +217,7 @@
 
 .annotation-view__content {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
 }
 
@@ -243,8 +229,7 @@
   min-width: 0;
 }
 
-.annotation-view__section-title,
-.annotation-view__subsection-title {
+.annotation-view__section-title {
   font-size: 1.5rem;
   font-weight: 600;
   margin-top: 0;
@@ -252,6 +237,19 @@
   color: #1d1d1f;
   letter-spacing: -0.3px;
   flex-shrink: 0;
+}
+
+.annotation-view__subsection-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #1d1d1f;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .annotation-view__input-display {
@@ -537,7 +535,7 @@
   align-items: center;
   gap: 0.75rem;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 500;
   color: #1d1d1f;
   margin: 0;
@@ -568,7 +566,7 @@
 }
 
 .annotation-view__reviewed-date {
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: #86868b;
   font-weight: 400;
   letter-spacing: -0.1px;
@@ -621,12 +619,6 @@
   .annotation-view__actions button {
     height: 44px;
     font-size: 0.9rem;
-  }
-
-  /* Save button full width on top */
-  .btn-save {
-    flex-basis: 100%;
-    order: -1;
   }
 
   /* All secondary buttons equal width */

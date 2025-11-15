@@ -772,7 +772,7 @@ OUTPUT:
 `}
               spellCheck={false}
             />
-            <div className="annotation-view__prompt-field">
+            <div className="annotation-view__subsection-title">
               <label htmlFor="prompt-name">Prompt Name</label>
               <input
                 id="prompt-name"
