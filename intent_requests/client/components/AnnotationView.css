@@ -143,6 +143,92 @@
   transform: translateY(-1px);
 }
 
+.annotation-view__create-banner {
+  background: linear-gradient(135deg, #e6f4ff 0%, #d9ecff 100%);
+  border: 2px solid #0071e3;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.3s ease;
+}
+
+.annotation-view__create-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.annotation-view__create-banner-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.annotation-view__create-banner-text {
+  flex: 1;
+  color: #004085;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.annotation-view__create-banner-text strong {
+  color: #002c5f;
+}
+
+.annotation-view__create-banner-close {
+  background: #0071e3;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.annotation-view__create-banner-close:hover {
+  background: #0051d5;
+  transform: translateY(-1px);
+}
+
+.annotation-view__prompt-field {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.annotation-view__prompt-field label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  letter-spacing: -0.2px;
+}
+
+.annotation-view__prompt-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #d2d2d7;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  transition: all 0.2s ease;
+  background: #fafafa;
+  color: #1d1d1f;
+  box-sizing: border-box;
+}
+
+.annotation-view__prompt-input:focus {
+  outline: none;
+  border-color: #0071e3;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+}
+
+.annotation-view__prompt-input::placeholder {
+  color: #86868b;
+}
+
 .annotation-view__content {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -49,8 +49,9 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
   const [isSaving, setIsSaving] = useState(false);
   const [reviewedRows, setReviewedRows] = useState<Set<number>>(new Set());
 
-  // Clone mode state
+  // Clone/Create mode state
   const [isCloneMode, setIsCloneMode] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useState(false);
   const [clonedFromData, setClonedFromData] = useState<{
     prompt: string;
     input: string;
@@ -133,16 +134,16 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter.prompts.size, filter.actions.size, filter.reviewStatus.size, filteredRows, rows]);
 
-  // Update edited fields when current row changes (but not in clone mode)
+  // Update edited fields when current row changes (but not in clone/create mode)
   useEffect(() => {
-    if (currentRow && !isCloneMode) {
+    if (currentRow && !isCloneMode && !isCreateMode) {
       setEditedPrompt(currentRow.prompt_name);
       setEditedInput(formatInput(currentRow.input));
       // Format JSON output for better readability
       setEditedOutput(formatJSON(currentRow.output));
       setIsManuallyReviewed(currentRow.manually_reviewed || false);
     }
-  }, [currentFilteredIndex, currentRow, isCloneMode]);
+  }, [currentFilteredIndex, currentRow, isCloneMode, isCreateMode]);
 
   // Auto-scroll textareas to bottom when content changes
   useEffect(() => {
@@ -161,8 +162,8 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
   const hasFilteredRows = filteredRows.length > 0;
 
   const hasUnsavedChanges = () => {
-    if (isCloneMode) {
-      // In clone mode, always has unsaved changes
+    if (isCloneMode || isCreateMode) {
+      // In clone/create mode, always has unsaved changes
       return true;
     }
     if (!currentRow) return false;
@@ -183,10 +184,25 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
     );
   };
 
+  const hasCreateMadeChanges = () => {
+    if (!isCreateMode) return false;
+    return (
+      editedPrompt.trim() !== '' ||
+      editedInput.trim() !== '' ||
+      editedOutput.trim() !== ''
+    );
+  };
+
   const handleSave = () => {
     if (isCloneMode) {
       // In clone mode, save as new row
       handleSaveClone();
+      return;
+    }
+
+    if (isCreateMode) {
+      // In create mode, save as new row
+      handleSaveCreate();
       return;
     }
 
@@ -283,6 +299,61 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
     }
   };
 
+  const handleSaveCreate = async () => {
+    if (!hasCreateMadeChanges()) {
+      alert('Please fill in at least one field before saving.');
+      return;
+    }
+
+    if (!editedPrompt.trim()) {
+      alert('Prompt name is required.');
+      return;
+    }
+
+    const newRow = {
+      prompt_name: editedPrompt,
+      input: editedInput,
+      output: editedOutput,
+      manually_reviewed: isManuallyReviewed,
+      manually_reviewed_ts: isManuallyReviewed ? Date.now() : null,
+      last_updated_ts: new Date().toISOString(),
+    };
+
+    // Show saving indicator
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/create-intent-row`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          row: newRow,
+          dataset,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create row');
+      }
+
+      // Exit create mode
+      setIsCreateMode(false);
+
+      // Refresh dataset to show new row
+      await onRefreshDataset();
+
+      alert('Row created successfully!');
+    } catch (error) {
+      console.error('Error creating row:', error);
+      alert(`Failed to create row: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleClone = () => {
     if (!currentRow) return;
 
@@ -297,6 +368,17 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
     setIsCloneMode(true);
   };
 
+  const handleCreate = () => {
+    // Clear all fields
+    setEditedPrompt('');
+    setEditedInput('');
+    setEditedOutput('');
+    setIsManuallyReviewed(false);
+
+    // Enter create mode
+    setIsCreateMode(true);
+  };
+
   const handleCancelClone = () => {
     // Restore original row data
     if (currentRow) {
@@ -309,6 +391,19 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
     // Exit clone mode
     setIsCloneMode(false);
     setClonedFromData(null);
+  };
+
+  const handleCancelCreate = () => {
+    // Restore original row data
+    if (currentRow) {
+      setEditedPrompt(currentRow.prompt_name);
+      setEditedInput(formatInput(currentRow.input));
+      setEditedOutput(formatJSON(currentRow.output));
+      setIsManuallyReviewed(currentRow.manually_reviewed || false);
+    }
+
+    // Exit create mode
+    setIsCreateMode(false);
   };
 
   const saveToServerAsync = async (annotation: Annotation) => {
@@ -339,9 +434,13 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
   };
 
   const navigateWithCheck = (navigationFn: () => void) => {
-    // Don't allow navigation in clone mode
+    // Don't allow navigation in clone/create mode
     if (isCloneMode) {
       alert('Please save or cancel the cloned row before navigating.');
+      return;
+    }
+    if (isCreateMode) {
+      alert('Please save or cancel the new row before navigating.');
       return;
     }
 
@@ -356,9 +455,13 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
   };
 
   const handleDatasetChangeWithCheck = (newDataset: string) => {
-    // Don't allow dataset change in clone mode
+    // Don't allow dataset change in clone/create mode
     if (isCloneMode) {
       alert('Please save or cancel the cloned row before changing datasets.');
+      return;
+    }
+    if (isCreateMode) {
+      alert('Please save or cancel the new row before changing datasets.');
       return;
     }
 
@@ -563,6 +666,19 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
             </div>
           </div>
         )}
+        {isCreateMode && (
+          <div className="annotation-view__create-banner">
+            <div className="annotation-view__create-banner-content">
+              <span className="annotation-view__create-banner-icon">✨</span>
+              <div className="annotation-view__create-banner-text">
+                <strong>Create Mode:</strong> You are creating a new row. Fill in the fields below.
+              </div>
+              <button onClick={handleCancelCreate} className="annotation-view__create-banner-close">
+                Cancel Create
+              </button>
+            </div>
+          </div>
+        )}
         <div className="annotation-view__content">
           <div className="annotation-view__request-section">
             <h3 className="annotation-view__subsection-title">Input</h3>
@@ -594,6 +710,18 @@ OUTPUT:
 `}
               spellCheck={false}
             />
+            <div className="annotation-view__prompt-field">
+              <label htmlFor="prompt-name">Prompt Name</label>
+              <input
+                id="prompt-name"
+                type="text"
+                value={editedPrompt}
+                onChange={(e) => setEditedPrompt(e.target.value)}
+                className="annotation-view__prompt-input"
+                placeholder="Enter prompt name..."
+                spellCheck={false}
+              />
+            </div>
           </div>
 
           <div className="annotation-view__annotation-section">
@@ -624,7 +752,7 @@ OUTPUT:
                 <span>Manually Reviewed</span>
               </label>
               <span className="annotation-view__reviewed-date">
-                {currentRow.manually_reviewed_ts && currentRow.manually_reviewed_ts !== 0
+                {!isCreateMode && currentRow?.manually_reviewed_ts && currentRow.manually_reviewed_ts !== 0
                   ? `Last reviewed: ${new Date(currentRow.manually_reviewed_ts).toLocaleString()}`
                   : ''}
               </span>
@@ -633,7 +761,7 @@ OUTPUT:
         </div>
 
         <div className="annotation-view__actions">
-          {!isCloneMode ? (
+          {!isCloneMode && !isCreateMode ? (
             <>
               <button
                 onClick={handlePrevious}
@@ -670,8 +798,15 @@ OUTPUT:
               >
                 📋 Clone
               </button>
+              <button
+                onClick={handleCreate}
+                disabled={isSaving}
+                className="btn-secondary"
+              >
+                ✨ Create
+              </button>
             </>
-          ) : (
+          ) : isCloneMode ? (
             <>
               <button
                 onClick={handleCancelClone}
@@ -687,6 +822,24 @@ OUTPUT:
                 title={!hasCloneMadeChanges() ? 'Make changes before saving' : 'Save as new row'}
               >
                 {isSaving ? 'Saving...' : 'Save Clone'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleCancelCreate}
+                disabled={isSaving}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving || !editedPrompt.trim()}
+                className="btn-save"
+                title={!editedPrompt.trim() ? 'Prompt name is required' : 'Save new row'}
+              >
+                {isSaving ? 'Saving...' : 'Save New'}
               </button>
             </>
           )}
