@@ -52,6 +52,7 @@ def create_intent_row():
 
         row_data = data["row"]
         dataset_repo = data.get("dataset", "Cantina/intent-full-data-20251106")
+        insert_after_index = data.get("insert_after_index")
 
         # Validate required fields
         if not row_data.get("prompt_name"):
@@ -67,15 +68,20 @@ def create_intent_row():
                 "error": "Missing output in row data"
             }), 400
 
-        # Load fresh data, append the new row, and push to Hugging Face
+        # Load fresh data, insert the new row, and push to Hugging Face
         dataset_service = get_dataset_service(dataset_repo=dataset_repo)
         rows = dataset_service.load(force_refresh=False)
 
-        # Add the new row
-        rows.append(row_data)
+        # Insert the new row after the specified index, or at the end if not specified
+        if insert_after_index is not None and 0 <= insert_after_index < len(rows):
+            rows.insert(insert_after_index + 1, row_data)
+            commit_msg = f"Add row after index {insert_after_index}: {row_data.get('prompt_name')}"
+        else:
+            rows.append(row_data)
+            commit_msg = f"Add row at end: {row_data.get('prompt_name')}"
 
         # Push updated data to Hugging Face
-        dataset_service._push_data_to_hub(rows, f"Add cloned row: {row_data.get('prompt_name')}")
+        dataset_service._push_data_to_hub(rows, commit_msg)
 
         return jsonify({
             "success": True,
@@ -85,6 +91,51 @@ def create_intent_row():
     except Exception as e:
         return jsonify({
             "error": "Failed to create row",
+            "message": str(e)
+        }), 500
+
+
+@annotations_bp.route("/delete-intent-row", methods=["POST"])
+def delete_intent_row():
+    """Delete a row from the dataset"""
+    try:
+        data = request.get_json()
+        if not data or "row_index" not in data:
+            return jsonify({
+                "error": "Missing row_index in request body"
+            }), 400
+
+        row_index = data["row_index"]
+        dataset_repo = data.get("dataset", "Cantina/intent-full-data-20251106")
+
+        # Validate row index
+        dataset_service = get_dataset_service(dataset_repo=dataset_repo)
+        rows = dataset_service.load(force_refresh=False)
+
+        if not (0 <= row_index < len(rows)):
+            return jsonify({
+                "error": f"Invalid row_index: {row_index}. Must be between 0 and {len(rows) - 1}"
+            }), 400
+
+        # Get row info for commit message before deleting
+        row_prompt_name = rows[row_index].get("prompt_name", "unknown")
+
+        # Delete the row
+        deleted_row = rows.pop(row_index)
+        commit_msg = f"Delete row {row_index}: {row_prompt_name}"
+
+        # Push updated data to Hugging Face
+        dataset_service._push_data_to_hub(rows, commit_msg)
+
+        return jsonify({
+            "success": True,
+            "message": "Row deleted successfully",
+            "dataset": dataset_repo,
+            "new_total_rows": len(rows)
+        })
+    except Exception as e:
+        return jsonify({
+            "error": "Failed to delete row",
             "message": str(e)
         }), 500
 

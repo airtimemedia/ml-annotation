@@ -382,9 +382,13 @@
   border-top: 1px solid #e5e5e7;
 }
 
+.annotation-view__actions-spacer {
+  width: 2rem;
+}
+
 .annotation-view__actions button {
   height: 44px;
-  padding: 0 20px;
+  padding: 0 24px;
   font-size: 0.95rem;
   font-weight: 600;
   border: none;
@@ -392,7 +396,8 @@
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: inherit;
-  min-width: 100px;
+  min-width: 130px;
+  width: 130px;
 }
 
 .annotation-view__actions button:disabled {
@@ -408,37 +413,105 @@
   transform: translateY(0);
 }
 
-/* Save button - Blue accent */
+/* Save button - Balanced blue */
 .btn-save {
-  background: #007aff;
+  background: #5091cd;
   color: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(80, 145, 205, 0.3);
+  border: none;
+  letter-spacing: -0.01em;
 }
 
 .btn-save:not(:disabled):hover {
-  background: #0051d5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background: #4482bd;
+  box-shadow: 0 2px 6px rgba(80, 145, 205, 0.35);
+  transform: translateY(-0.5px);
 }
 
 .btn-save:not(:disabled):active {
-  background: #004fc4;
+  background: #3873ad;
+  transform: translateY(0);
 }
 
-/* Secondary buttons - Grey */
+/* Secondary buttons - Clean grey */
 .btn-secondary {
-  background: #f5f5f7;
-  color: #1d1d1f;
-  border: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  background: white;
+  color: #3c3c43;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  letter-spacing: -0.01em;
 }
 
 .btn-secondary:not(:disabled):hover {
-  background: #e8e8ed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  background: #f9f9f9;
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-0.5px);
 }
 
 .btn-secondary:not(:disabled):active {
-  background: #d2d2d7;
+  background: #f0f0f0;
+  transform: translateY(0);
+}
+
+/* Create button - Balanced green */
+.btn-create {
+  background: #52b573;
+  color: white;
+  box-shadow: 0 1px 3px rgba(82, 181, 115, 0.3);
+  border: none;
+  letter-spacing: -0.01em;
+}
+
+.btn-create:not(:disabled):hover {
+  background: #47a665;
+  box-shadow: 0 2px 6px rgba(82, 181, 115, 0.35);
+  transform: translateY(-0.5px);
+}
+
+.btn-create:not(:disabled):active {
+  background: #3d9757;
+  transform: translateY(0);
+}
+
+/* Clone button - Balanced green */
+.btn-clone {
+  background: #52b573;
+  color: white;
+  box-shadow: 0 1px 3px rgba(82, 181, 115, 0.3);
+  border: none;
+  letter-spacing: -0.01em;
+}
+
+.btn-clone:not(:disabled):hover {
+  background: #47a665;
+  box-shadow: 0 2px 6px rgba(82, 181, 115, 0.35);
+  transform: translateY(-0.5px);
+}
+
+.btn-clone:not(:disabled):active {
+  background: #3d9757;
+  transform: translateY(0);
+}
+
+/* Delete button - Balanced red */
+.btn-delete {
+  background: #d45d68;
+  color: white;
+  box-shadow: 0 1px 3px rgba(212, 93, 104, 0.3);
+  border: none;
+  letter-spacing: -0.01em;
+}
+
+.btn-delete:not(:disabled):hover {
+  background: #c85059;
+  box-shadow: 0 2px 6px rgba(212, 93, 104, 0.35);
+  transform: translateY(-0.5px);
+}
+
+.btn-delete:not(:disabled):active {
+  background: #bc444b;
+  transform: translateY(0);
 }
 
 .annotation-view__empty {

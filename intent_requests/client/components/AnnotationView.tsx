@@ -62,6 +62,9 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
 
+  // Modal state for delete confirmation
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   // Refs for auto-scrolling textareas to bottom
   const inputTextareaRef = useRef<HTMLTextAreaElement>(null);
   const outputTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -275,6 +278,7 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
         body: JSON.stringify({
           row: newRow,
           dataset,
+          insert_after_index: currentOriginalIndex,
         }),
       });
 
@@ -290,7 +294,11 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
       // Refresh dataset to show new row
       await onRefreshDataset();
 
-      alert('Row cloned successfully!');
+      // Navigate to the newly created row (next index after current)
+      const newRowIndex = currentOriginalIndex + 1;
+      setCurrentOriginalIndex(newRowIndex);
+
+      alert('Row cloned successfully! Now viewing the new row.');
     } catch (error) {
       console.error('Error creating cloned row:', error);
       alert(`Failed to clone row: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -331,6 +339,7 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
         body: JSON.stringify({
           row: newRow,
           dataset,
+          insert_after_index: currentOriginalIndex,
         }),
       });
 
@@ -345,7 +354,11 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
       // Refresh dataset to show new row
       await onRefreshDataset();
 
-      alert('Row created successfully!');
+      // Navigate to the newly created row (next index after current)
+      const newRowIndex = currentOriginalIndex + 1;
+      setCurrentOriginalIndex(newRowIndex);
+
+      alert('Row created successfully! Now viewing the new row.');
     } catch (error) {
       console.error('Error creating row:', error);
       alert(`Failed to create row: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -404,6 +417,55 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
 
     // Exit create mode
     setIsCreateMode(false);
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setShowDeleteModal(false);
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/delete-intent-row`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          row_index: currentOriginalIndex,
+          dataset,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete row');
+      }
+
+      // Refresh dataset to remove deleted row
+      await onRefreshDataset();
+
+      // Navigate to previous row if possible, otherwise stay at same index (which will be next row)
+      if (currentOriginalIndex > 0) {
+        setCurrentOriginalIndex(currentOriginalIndex - 1);
+      } else if (rows.length > 1) {
+        // If we deleted the first row, stay at index 0 (which will now be the next row)
+        setCurrentOriginalIndex(0);
+      }
+
+      alert('Row deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting row:', error);
+      alert(`Failed to delete row: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
   };
 
   const saveToServerAsync = async (annotation: Annotation) => {
@@ -771,13 +833,6 @@ OUTPUT:
                 ← Previous
               </button>
               <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="btn-save"
-              >
-                {isSaving ? 'Saving...' : 'Save'}
-              </button>
-              <button
                 onClick={handleNext}
                 disabled={currentFilteredIndex >= filteredRows.length - 1 || isSaving}
                 className="btn-secondary"
@@ -791,19 +846,34 @@ OUTPUT:
               >
                 🎲 Random
               </button>
+              <div className="annotation-view__actions-spacer" />
+              <button
+                onClick={handleCreate}
+                disabled={isSaving}
+                className="btn-create"
+              >
+                ✨ Create
+              </button>
               <button
                 onClick={handleClone}
                 disabled={isSaving}
-                className="btn-secondary"
+                className="btn-clone"
               >
                 📋 Clone
               </button>
               <button
-                onClick={handleCreate}
+                onClick={handleSave}
                 disabled={isSaving}
-                className="btn-secondary"
+                className="btn-save"
               >
-                ✨ Create
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={handleDeleteClick}
+                disabled={isSaving}
+                className="btn-delete"
+              >
+                🗑️ Delete
               </button>
             </>
           ) : isCloneMode ? (
@@ -864,6 +934,28 @@ OUTPUT:
         onConfirm={confirmNavigation}
         onCancel={cancelNavigation}
       />
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={handleDeleteCancel}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete Row?</h2>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to delete this row? This action cannot be undone.</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={handleDeleteCancel} className="modal-button modal-button--cancel">
+                Cancel
+              </button>
+              <button onClick={handleDeleteConfirm} className="modal-button modal-button--confirm">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
