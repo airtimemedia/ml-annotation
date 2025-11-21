@@ -1,0 +1,25 @@
+.audio-player-with-waveform {
+  position: relative;
+  width: 100%;
+  height: 48px;
+}
+
+.waveform-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.audio-player-overlay {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+  z-index: 2;
+  background: transparent;
+}

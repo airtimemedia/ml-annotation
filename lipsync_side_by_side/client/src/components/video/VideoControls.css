@@ -1,0 +1,142 @@
+.controls {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.controls-row:last-child {
+  margin-bottom: 0;
+}
+
+.frame-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.frame-btn {
+  min-width: 60px;
+  height: 40px;
+}
+
+.play-btn {
+  min-width: 60px;
+  height: 40px;
+}
+
+.timeline-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline {
+  position: relative;
+  width: 100%;
+  height: 80px;
+  background: #d4d4d4;
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.waveform {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+  z-index: 0;
+}
+
+.waveform-bar {
+  flex: 1;
+  background: #a8a8a8;
+  margin: 0 0.5px;
+  border-radius: 1px;
+  min-height: 2px;
+  opacity: 0.6;
+}
+
+.timeline-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #2a2a2a;
+  border-radius: 8px 0 0 8px;
+  pointer-events: none;
+  will-change: width;
+  z-index: 1;
+  opacity: 0.3;
+}
+
+.timeline-handle {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  will-change: left, transform;
+  z-index: 2;
+}
+
+.timeline:hover .timeline-handle {
+  opacity: 1;
+}
+
+.timeline-handle:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+
+@media (max-width: 768px) {
+  .controls {
+    padding: 16px;
+  }
+
+  .controls-row {
+    flex-wrap: wrap;
+  }
+
+  .frame-row {
+    width: 100%;
+  }
+
+  .frame-btn,
+  .play-btn {
+    flex: 1;
+  }
+}

@@ -1,0 +1,31 @@
+.progress-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.progress-step {
+  width: 40px;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  transition: all var(--transition-slow);
+}
+
+.progress-step.active {
+  background: var(--text-primary);
+}
+
+.progress-step.completed {
+  background: var(--text-secondary);
+}
+
+.progress-ellipsis {
+  width: 20px;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  opacity: 0.5;
+}

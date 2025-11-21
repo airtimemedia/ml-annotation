@@ -1,0 +1,77 @@
+# Environment & secrets
+.env
+.env.local
+.env*.local
+
+# Git
+.git
+.gitignore
+
+# Data directory (using S3 instead)
+data/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+server/.venv/
+server/venv/
+server/env/
+*.egg-info/
+dist/
+build/
+
+# Node.js
+client/node_modules/
+client/npm-debug.log*
+client/yarn-debug.log*
+client/.pnpm-debug.log*
+
+# Client source (we only need the built dist/)
+client/src/
+client/public/
+client/eslint.config.js
+client/package.json
+client/package-lock.json
+client/index.html
+client/vite.config.js
+
+# Documentation
+README.md
+QUICKSTART.md
+UPDATES.md
+REFACTORING.md
+*.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Vercel
+.vercel/
+
+# Test files
+**/*test*.py
+**/*test*.js
+**/__tests__/
+**/tests/
+
+# Other
+tmp/
+temp/
+*.tmp
+*.log

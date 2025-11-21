@@ -16,6 +16,7 @@ def save_annotation():
 
         annotation = data["annotation"]
         dataset_repo = data.get("dataset", "Cantina/intent-full-data-20251106")
+        split = data.get("split", "train")  # 'train' or 'test'
         prompt_name = annotation.get("prompt_name")
 
         if not prompt_name:
@@ -25,13 +26,14 @@ def save_annotation():
 
         # Load fresh data, update the row, and push to Hugging Face
         # This ensures no shared state between users
-        dataset_service = get_dataset_service(dataset_repo=dataset_repo)
+        dataset_service = get_dataset_service(dataset_repo=dataset_repo, split=split)
         dataset_service.update_and_push(annotation)
 
         return jsonify({
             "success": True,
-            "message": "Annotation saved to Hugging Face",
-            "dataset": dataset_repo
+            "message": f"Annotation saved to {split} split",
+            "dataset": dataset_repo,
+            "split": split
         })
     except Exception as e:
         return jsonify({
@@ -52,6 +54,7 @@ def create_intent_row():
 
         row_data = data["row"]
         dataset_repo = data.get("dataset", "Cantina/intent-full-data-20251106")
+        split = data.get("split", "train")  # 'train' or 'test'
         insert_after_index = data.get("insert_after_index")
 
         # Validate required fields
@@ -69,7 +72,7 @@ def create_intent_row():
             }), 400
 
         # Load fresh data, insert the new row, and push to Hugging Face
-        dataset_service = get_dataset_service(dataset_repo=dataset_repo)
+        dataset_service = get_dataset_service(dataset_repo=dataset_repo, split=split)
         rows = dataset_service.load(force_refresh=False)
 
         # Insert the new row after the specified index, or at the end if not specified
@@ -85,8 +88,9 @@ def create_intent_row():
 
         return jsonify({
             "success": True,
-            "message": "Row created successfully",
-            "dataset": dataset_repo
+            "message": f"Row created successfully in {split} split",
+            "dataset": dataset_repo,
+            "split": split
         })
     except Exception as e:
         return jsonify({
@@ -107,9 +111,10 @@ def delete_intent_row():
 
         row_index = data["row_index"]
         dataset_repo = data.get("dataset", "Cantina/intent-full-data-20251106")
+        split = data.get("split", "train")  # 'train' or 'test'
 
         # Validate row index
-        dataset_service = get_dataset_service(dataset_repo=dataset_repo)
+        dataset_service = get_dataset_service(dataset_repo=dataset_repo, split=split)
         rows = dataset_service.load(force_refresh=False)
 
         if not (0 <= row_index < len(rows)):
@@ -129,8 +134,9 @@ def delete_intent_row():
 
         return jsonify({
             "success": True,
-            "message": "Row deleted successfully",
+            "message": f"Row deleted successfully from {split} split",
             "dataset": dataset_repo,
+            "split": split,
             "new_total_rows": len(rows)
         })
     except Exception as e:

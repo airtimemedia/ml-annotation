@@ -27,12 +27,71 @@
       "request": "launch",
       "command": "cd intent_requests/client && npm run dev",
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "🎤 TTS Side by Side - Flask Server",
+      "type": "python",
+      "request": "launch",
+      "module": "app.main",
+      "python": "/Users/nicholasbern/miniconda3/bin/python3",
+      "cwd": "${workspaceFolder}/tts_side_by_side/server",
+      "env": {
+        "FLASK_ENV": "development",
+        "PORT": "5002"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "🎤 TTS Side by Side - Vite Client",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "cd tts_side_by_side/client && npm run dev",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "💋 Lipsync Side by Side - Flask Server",
+      "type": "python",
+      "request": "launch",
+      "module": "app.main",
+      "python": "/Users/nicholasbern/miniconda3/bin/python3",
+      "cwd": "${workspaceFolder}/lipsync_side_by_side/server",
+      "env": {
+        "FLASK_ENV": "development",
+        "PORT": "8081"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "💋 Lipsync Side by Side - Vite Client",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "cd lipsync_side_by_side/client && npm run dev",
+      "cwd": "${workspaceFolder}"
     }
   ],
   "compounds": [
     {
       "name": "🎯 Intent Requests",
-      "configurations": ["🎯 Intent Requests - Flask Server", "🎯 Intent Requests - Vite Client"],
+      "configurations": [
+        "🎯 Intent Requests - Flask Server",
+        "🎯 Intent Requests - Vite Client"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "🎤 TTS Side by Side",
+      "configurations": [
+        "🎤 TTS Side by Side - Flask Server",
+        "🎤 TTS Side by Side - Vite Client"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "💋 Lipsync Side by Side",
+      "configurations": [
+        "💋 Lipsync Side by Side - Flask Server",
+        "💋 Lipsync Side by Side - Vite Client"
+      ],
       "stopAll": true
     }
   ]

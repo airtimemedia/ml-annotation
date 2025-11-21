@@ -10,8 +10,9 @@ def load_dataset():
     try:
         refresh = request.args.get("refresh", "false").lower() == "true"
         dataset_repo = request.args.get("dataset", "Cantina/intent-full-data-20251106")
+        split = request.args.get("split", "train")  # 'train' or 'test'
 
-        dataset_service = get_dataset_service(dataset_repo=dataset_repo)
+        dataset_service = get_dataset_service(dataset_repo=dataset_repo, split=split)
 
         # Always load fresh data (no shared cache between users)
         rows = dataset_service.load(force_refresh=refresh)
@@ -21,7 +22,8 @@ def load_dataset():
             "rows": rows,
             "count": len(rows),
             "source": "huggingface",
-            "dataset": dataset_repo
+            "dataset": dataset_repo,
+            "split": split
         })
     except Exception as e:
         return jsonify({

@@ -8,7 +8,9 @@ import './App.css';
 const API_BASE = import.meta.env.DEV ? 'http://localhost:5177' : '';
 
 const DEFAULT_DATASET = 'Cantina/intent-full-data-20251106';
+const DEFAULT_SPLIT = 'train';
 const DATASET_STORAGE_KEY = 'annotation-tool-dataset';
+const SPLIT_STORAGE_KEY = 'annotation-tool-split';
 
 function App() {
   // Load dataset from URL → localStorage → default
@@ -23,7 +25,20 @@ function App() {
     return DEFAULT_DATASET;
   };
 
+  // Load split from URL → localStorage → default
+  const getInitialSplit = (): string => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSplit = urlParams.get('split');
+    if (urlSplit) return urlSplit;
+
+    const storedSplit = localStorage.getItem(SPLIT_STORAGE_KEY);
+    if (storedSplit) return storedSplit;
+
+    return DEFAULT_SPLIT;
+  };
+
   const [dataset, setDataset] = useState<string>(getInitialDataset());
+  const [split, setSplit] = useState<string>(getInitialSplit());
   const [rows, setRows] = useState<DatasetRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +47,7 @@ function App() {
 
   useEffect(() => {
     loadDataset();
-  }, [dataset]);
+  }, [dataset, split]);
 
   const loadDataset = async () => {
     try {
@@ -43,6 +58,7 @@ function App() {
       const baseUrl = `${API_BASE}/api/load-intent-data`;
       const params = new URLSearchParams();
       params.append('dataset', dataset);
+      params.append('split', split);
 
       const response = await fetch(`${baseUrl}?${params.toString()}`);
 
@@ -56,6 +72,7 @@ function App() {
 
       // Save to localStorage
       localStorage.setItem(DATASET_STORAGE_KEY, dataset);
+      localStorage.setItem(SPLIT_STORAGE_KEY, split);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -78,10 +95,11 @@ function App() {
       isRefreshingRef.current = true;
 
       try {
-        console.log('Refreshing dataset from Hugging Face...');
+        console.log(`Refreshing ${split} split from Hugging Face...`);
         const baseUrl = `${API_BASE}/api/load-intent-data`;
         const params = new URLSearchParams();
         params.append('dataset', dataset);
+        params.append('split', split);
         params.append('refresh', 'true');
 
         const response = await fetch(`${baseUrl}?${params.toString()}`);
@@ -142,6 +160,11 @@ function App() {
     // loadDataset will be called automatically due to useEffect dependency
   };
 
+  const handleSplitChange = (newSplit: string) => {
+    setSplit(newSplit);
+    // loadDataset will be called automatically due to useEffect dependency
+  };
+
   if (isLoading) {
     return (
       <div className="app">
@@ -181,8 +204,10 @@ function App() {
     <AnnotationView
       rows={rows}
       dataset={dataset}
+      split={split}
       isLoadingDataset={isLoading}
       onDatasetChange={handleDatasetChange}
+      onSplitChange={handleSplitChange}
       onAnnotationComplete={handleAnnotationComplete}
       onRefreshDataset={refreshDataset}
       onUpdateRow={handleUpdateRow}

@@ -11,10 +11,11 @@ os.environ.setdefault("HUGGINGFACE_HUB_CACHE", "/tmp/huggingface/hub")
 
 
 class DatasetService:
-    def __init__(self, dataset_repo: str = "Cantina/intent-full-data-20251106"):
+    def __init__(self, dataset_repo: str = "Cantina/intent-full-data-20251106", split: str = "train"):
         # No in-memory cache - always load fresh to avoid user data leaking between requests
         self.hf_token = os.environ.get("HUGGINGFACE_TOKEN")
         self.dataset_repo = dataset_repo
+        self.split = split  # 'train' or 'test'
 
         if not self.hf_token:
             raise ValueError("HUGGINGFACE_TOKEN environment variable is required")
@@ -25,14 +26,15 @@ class DatasetService:
 
     def load(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
         """Load dataset from Hugging Face (always fresh to avoid user data leaking)"""
-        print(f"Loading from Hugging Face...")
+        print(f"Loading {self.split} split from Hugging Face...")
 
         # Download parquet file from HuggingFace
         # The file is cached in /tmp/huggingface/hub for performance (read-only cache)
         # but we don't keep an in-memory cache to avoid sharing data between users
+        parquet_filename = f"data/{self.split}-00000-of-00001.parquet"
         parquet_path = hf_hub_download(
             repo_id=self.dataset_repo,
-            filename="data/train-00000-of-00001.parquet",
+            filename=parquet_filename,
             repo_type="dataset",
             token=self.hf_token,
             cache_dir="/tmp/huggingface/hub",
@@ -47,7 +49,7 @@ class DatasetService:
 
         # Transform rows
         rows = [self._transform_row(row) for row in data_list]
-        print(f"Loaded {len(rows)} rows from Hugging Face")
+        print(f"Loaded {len(rows)} rows from {self.split} split")
         return rows
 
     # Removed async loading methods to prevent shared state between users
@@ -82,7 +84,7 @@ class DatasetService:
         if not rows:
             raise ValueError("No data to push")
 
-        print(f"Pushing {len(rows)} rows to Hugging Face...")
+        print(f"Pushing {len(rows)} rows to {self.split} split...")
 
         # Convert to PyArrow Table
         table = pa.Table.from_pylist(rows)
@@ -95,23 +97,24 @@ class DatasetService:
             # Write parquet file
             pq.write_table(table, tmp_path)
 
-            # Upload using HuggingFace Hub API
+            # Upload using HuggingFace Hub API - use split-specific filename
+            parquet_filename = f"data/{self.split}-00000-of-00001.parquet"
             api = HfApi()
             api.upload_file(
                 path_or_fileobj=tmp_path,
-                path_in_repo="data/train-00000-of-00001.parquet",
+                path_in_repo=parquet_filename,
                 repo_id=self.dataset_repo,
                 repo_type="dataset",
                 token=self.hf_token,
                 commit_message=commit_message
             )
-            print(f"Successfully pushed to Hugging Face")
+            print(f"Successfully pushed {self.split} split to Hugging Face")
         finally:
             # Clean up temp file
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
 
-def get_dataset_service(dataset_repo: str = "Cantina/intent-full-data-20251106") -> DatasetService:
+def get_dataset_service(dataset_repo: str = "Cantina/intent-full-data-20251106", split: str = "train") -> DatasetService:
     """Create a new DatasetService instance (no singleton to avoid shared state)"""
-    return DatasetService(dataset_repo=dataset_repo)
+    return DatasetService(dataset_repo=dataset_repo, split=split)

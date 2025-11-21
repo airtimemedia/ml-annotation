@@ -1,0 +1,105 @@
+.issues-dropdown {
+  position: relative;
+  flex: 1;
+}
+
+.issues-trigger {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+  font-family: var(--font-system);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236e6e73' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+.issues-trigger:hover {
+  border-color: var(--text-tertiary);
+  background: var(--bg-secondary);
+}
+
+.issues-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 100;
+}
+
+.issues-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.issues-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.issues-menu::-webkit-scrollbar-thumb {
+  background: #86868b;
+  border-radius: 2px;
+}
+
+.issues-menu::-webkit-scrollbar-thumb:hover {
+  background: #6e6e73;
+}
+
+.issues-menu {
+  scrollbar-width: thin;
+  scrollbar-color: #86868b transparent;
+}
+
+.issue-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  font-size: 13px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.issue-item:last-child {
+  border-bottom: none;
+}
+
+.issue-item:hover {
+  background: var(--bg-primary);
+}
+
+.issue-item input[type="checkbox"] {
+  margin-right: 10px;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: #1d1d1f;
+}
+
+.issue-item span {
+  flex: 1;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .issues-dropdown {
+    max-width: none;
+  }
+}

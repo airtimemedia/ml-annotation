@@ -1,0 +1,10 @@
+Flask==3.0.3
+Flask-CORS==4.0.0
+elevenlabs==1.12.0
+python-dotenv==1.0.1
+numpy==1.26.4
+openai==1.51.2
+# imageio-ffmpeg==0.5.1
+boto3==1.35.36
+redis==5.0.1
+requests==2.31.0

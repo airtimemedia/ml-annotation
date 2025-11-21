@@ -1,0 +1,15 @@
+{
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
+  "installCommand": "echo 'Handled in buildCommand'",
+  "functions": {
+    "api/**/*.py": {
+      "maxDuration": 300,
+      "memory": 3008
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/client/dist/index.html" }
+  ]
+}

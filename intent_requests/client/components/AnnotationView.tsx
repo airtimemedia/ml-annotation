@@ -6,6 +6,7 @@ import { JumpControl } from './JumpControl';
 import { FilterBadgeList } from './FilterBadgeList';
 import { UnsavedChangesModal } from './UnsavedChangesModal';
 import { DatasetSelector } from './DatasetSelector';
+import { SplitSelector } from './SplitSelector';
 import { useFilteredRows } from '../hooks/useFilteredRows';
 import { useUrlState } from '../hooks/useUrlState';
 import { useParsedRowCache } from '../hooks/useParsedRowCache';
@@ -18,14 +19,16 @@ const API_BASE = import.meta.env.DEV ? 'http://localhost:5177' : '';
 interface AnnotationViewProps {
   rows: DatasetRow[];
   dataset: string;
+  split: string;
   isLoadingDataset: boolean;
   onDatasetChange: (dataset: string) => void;
+  onSplitChange: (split: string) => void;
   onAnnotationComplete: (annotations: Annotation[]) => void;
   onRefreshDataset: () => Promise<void>;
   onUpdateRow: (index: number, updatedRow: Partial<DatasetRow>) => void;
 }
 
-export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChange, onAnnotationComplete, onRefreshDataset, onUpdateRow }: AnnotationViewProps) {
+export function AnnotationView({ rows, dataset, split, isLoadingDataset, onDatasetChange, onSplitChange, onAnnotationComplete, onRefreshDataset, onUpdateRow }: AnnotationViewProps) {
   // Create parsed cache ONCE at the top level
   const parsedCache = useParsedRowCache(rows);
   // URL state management
@@ -101,9 +104,9 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
   // Sync state to URL (after initialization)
   useEffect(() => {
     if (isInitialized.current && rows.length > 0) {
-      updateUrl(currentOriginalIndex, filter, dataset);
+      updateUrl(currentOriginalIndex, filter, dataset, split);
     }
-  }, [currentOriginalIndex, filter, dataset, rows.length, updateUrl]);
+  }, [currentOriginalIndex, filter, dataset, split, rows.length, updateUrl]);
 
   // Handle browser back/forward navigation
   useEffect(() => {
@@ -278,6 +281,7 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
         body: JSON.stringify({
           row: newRow,
           dataset,
+          split,
           insert_after_index: currentOriginalIndex,
         }),
       });
@@ -339,6 +343,7 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
         body: JSON.stringify({
           row: newRow,
           dataset,
+          split,
           insert_after_index: currentOriginalIndex,
         }),
       });
@@ -436,6 +441,7 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
         body: JSON.stringify({
           row_index: currentOriginalIndex,
           dataset,
+          split,
         }),
       });
 
@@ -478,6 +484,7 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
         body: JSON.stringify({
           annotation,
           dataset,
+          split,
         }),
       });
 
@@ -532,6 +539,25 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
       setShowUnsavedModal(true);
     } else {
       onDatasetChange(newDataset);
+    }
+  };
+
+  const handleSplitChangeWithCheck = (newSplit: string) => {
+    // Don't allow split change in clone/create mode
+    if (isCloneMode) {
+      alert('Please save or cancel the cloned row before changing splits.');
+      return;
+    }
+    if (isCreateMode) {
+      alert('Please save or cancel the new row before changing splits.');
+      return;
+    }
+
+    if (hasUnsavedChanges()) {
+      setPendingNavigation(() => () => onSplitChange(newSplit));
+      setShowUnsavedModal(true);
+    } else {
+      onSplitChange(newSplit);
     }
   };
 
@@ -670,6 +696,11 @@ export function AnnotationView({ rows, dataset, isLoadingDataset, onDatasetChang
           <DatasetSelector
             currentDataset={dataset}
             onDatasetChange={handleDatasetChangeWithCheck}
+            disabled={isLoadingDataset}
+          />
+          <SplitSelector
+            currentSplit={split}
+            onSplitChange={handleSplitChangeWithCheck}
             disabled={isLoadingDataset}
           />
           <a

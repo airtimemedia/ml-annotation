@@ -5,6 +5,7 @@ interface UrlState {
   rowIndex: number | null;
   filters: FilterState;
   dataset: string | null;
+  split: string | null;
 }
 
 /**
@@ -46,19 +47,23 @@ export function useUrlState() {
     // Parse dataset
     const dataset = params.get('dataset');
 
+    // Parse split
+    const split = params.get('split');
+
     return {
       rowIndex: rowIndex !== null && !isNaN(rowIndex) ? rowIndex : null,
       filters: { prompts, actions, reviewStatus },
       dataset,
+      split,
     };
   }, []);
 
   /**
    * Update URL with current state
-   * Order: dataset, row, filters
+   * Order: dataset, split, row, filters
    */
   const updateUrl = useCallback(
-    (rowIndex: number, filters: FilterState, dataset?: string) => {
+    (rowIndex: number, filters: FilterState, dataset?: string, split?: string) => {
       const params = new URLSearchParams();
 
       // Add dataset first (if provided)
@@ -66,7 +71,12 @@ export function useUrlState() {
         params.set('dataset', dataset);
       }
 
-      // Add row index second
+      // Add split second (if provided)
+      if (split) {
+        params.set('split', split);
+      }
+
+      // Add row index third
       params.set('row', rowIndex.toString());
 
       // Add prompt filters (if any)
