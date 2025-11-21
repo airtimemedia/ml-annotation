@@ -43,6 +43,24 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
     const generateFor1 = service === 'service1' || service === 'both';
     const generateFor2 = service === 'service2' || service === 'both';
 
+    // Validate we have required data - fail fast, no fallbacks
+    if (generateFor1) {
+      if (!provider1) {
+        throw new Error('Service 1: Provider is required');
+      }
+      if (!settings1 || !settings1.model) {
+        throw new Error('Service 1: Settings with model are required');
+      }
+    }
+    if (generateFor2) {
+      if (!provider2) {
+        throw new Error('Service 2: Provider is required');
+      }
+      if (!settings2 || !settings2.model) {
+        throw new Error('Service 2: Settings with model are required');
+      }
+    }
+
     setIsGenerating({
       service1: generateFor1,
       service2: generateFor2,
@@ -62,10 +80,11 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
         const payload1 = {
           text: text.trim(),
           voices: voices,
-          provider: provider1 || 'elevenlabs',
+          provider: provider1,
           settings: settings1,
         };
         console.log('[GENERATE] Service 1 request:', payload1);
+        console.log('[GENERATE] Service 1 model:', settings1.model);
 
         const response1 = await fetch('/api/tts/generate', {
           method: 'POST',
@@ -83,7 +102,11 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
           throw new Error(data1.error || 'Failed to generate audio for Service 1');
         }
 
-        service1Audio = data1.audio;
+        service1Audio = {
+          ...data1.audio,
+          provider: provider1,
+          model: settings1.model,
+        };
       }
 
       // Generate for Service 2
@@ -91,10 +114,11 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
         const payload2 = {
           text: text.trim(),
           voices: voices,
-          provider: provider2 || 'elevenlabs',
+          provider: provider2,
           settings: settings2,
         };
         console.log('[GENERATE] Service 2 request:', payload2);
+        console.log('[GENERATE] Service 2 model:', settings2.model);
 
         const response2 = await fetch('/api/tts/generate', {
           method: 'POST',
@@ -112,7 +136,11 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
           throw new Error(data2.error || 'Failed to generate audio for Service 2');
         }
 
-        service2Audio = data2.audio;
+        service2Audio = {
+          ...data2.audio,
+          provider: provider2,
+          model: settings2.model,
+        };
       }
 
       // Update audio data based on which services were generated

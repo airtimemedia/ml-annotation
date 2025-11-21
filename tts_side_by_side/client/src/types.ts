@@ -112,6 +112,8 @@ export interface AudioResult {
   status: 'ready' | 'pending' | 'error';
   path: string;
   duration?: number;
+  provider?: string;
+  model?: string;
 }
 
 // Service audio data

@@ -4,11 +4,375 @@ import tempfile
 import base64
 import json
 import traceback
+import pickle
 import requests
-import torch
+import numpy as np
 from pathlib import Path
 from app.utils.audio_utils import convert_to_wav
 from .checkpoint_service import CheckpointService
+
+
+class TorchUnpickler(pickle.Unpickler):
+    """
+    Custom unpickler to load PyTorch .pth files without torch installed.
+
+    Handles both legacy pickle format and newer ZIP-based format.
+    For ZIP format, loads tensor data from archive/.data/ directory.
+    Converts PyTorch tensors to numpy arrays for JSON serialization.
+
+    This allows the Cantina API (v1.0.2) to work on Vercel without the
+    large torch dependency (~250MB+).
+    """
+    def __init__(self, *args, zip_file=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.storage_map = {}  # Map persistent IDs to storage objects
+        self.zip_file = zip_file  # Optional ZIP file for loading data files
+
+    def persistent_load(self, pid):
+        """
+        Handle PyTorch's persistent tensor storage references.
+        PyTorch saves tensors with persistent IDs that reference storage objects.
+
+        In protocol 0, pid is a string. In newer protocols, it's a tuple.
+        """
+        # Protocol 0: pid is a string identifier
+        if isinstance(pid, str):
+            # If we have a ZIP file, try to load data from archive/.data/
+            if self.zip_file is not None:
+                data_path = f"archive/.data/{pid}"
+                if data_path in self.zip_file.namelist():
+                    print(f"[YTTS] Loading storage from ZIP: {data_path}")
+                    try:
+                        with self.zip_file.open(data_path) as f:
+                            # Read binary data and convert to numpy array
+                            data_bytes = f.read()
+                            # Assume float32 for now (most common)
+                            storage = np.frombuffer(data_bytes, dtype=np.float32)
+                            self.storage_map[pid] = storage
+                            print(f"[YTTS] Loaded storage {pid}: shape={storage.shape}")
+                            return storage
+                    except Exception as e:
+                        print(f"[YTTS] Error loading storage {pid}: {e}")
+
+            # Create or return existing storage for this ID
+            if pid not in self.storage_map or self.storage_map[pid] is None:
+                # Create a placeholder storage object
+                storage = TorchStorage(pid)
+                self.storage_map[pid] = storage
+            return self.storage_map[pid]
+
+        # Newer protocols: pid is a tuple like ('storage', storage_type, key, location, size)
+        if isinstance(pid, tuple) and len(pid) > 0:
+            type_tag = pid[0]
+            if type_tag == 'storage':
+                storage_type, key, location, numel = pid[1:5]
+
+                # If we have a ZIP file, try loading from it
+                if self.zip_file is not None and location:
+                    data_path = f"archive/.data/{location}"
+                    if data_path in self.zip_file.namelist():
+                        print(f"[YTTS] Loading storage from ZIP: {data_path}")
+                        try:
+                            with self.zip_file.open(data_path) as f:
+                                data_bytes = f.read()
+                                # Determine dtype from storage_type
+                                if 'Float' in str(storage_type):
+                                    dtype = np.float32
+                                elif 'Long' in str(storage_type):
+                                    dtype = np.int64
+                                elif 'Double' in str(storage_type):
+                                    dtype = np.float64
+                                else:
+                                    dtype = np.float32
+
+                                storage = np.frombuffer(data_bytes, dtype=dtype)
+                                self.storage_map[key] = storage
+                                print(f"[YTTS] Loaded storage {key}: shape={storage.shape}")
+                                return storage
+                        except Exception as e:
+                            print(f"[YTTS] Error loading storage {key}: {e}")
+
+                # Fallback: Create empty numpy array
+                if 'Float' in str(storage_type):
+                    dtype = np.float32
+                elif 'Long' in str(storage_type):
+                    dtype = np.int64
+                elif 'Int' in str(storage_type):
+                    dtype = np.int32
+                elif 'Short' in str(storage_type):
+                    dtype = np.int16
+                elif 'Char' in str(storage_type):
+                    dtype = np.int8
+                elif 'Byte' in str(storage_type):
+                    dtype = np.uint8
+                elif 'Double' in str(storage_type):
+                    dtype = np.float64
+                else:
+                    dtype = np.float32
+
+                storage = np.zeros(numel, dtype=dtype)
+                self.storage_map[key] = storage
+                return storage
+
+        # Return the pid itself for unrecognized formats
+        return pid
+
+    def find_class(self, module, name):
+        # Intercept torch tensor classes and use a stub
+        if module.startswith('torch'):
+            if name == 'FloatStorage' or name.endswith('Storage'):
+                # Storage classes contain the actual tensor data
+                return TorchStorage
+            elif name in ['Tensor', 'Parameter', 'LongTensor', 'FloatTensor']:
+                # Tensor classes - reconstruct from storage
+                return TorchTensor
+            elif name == '_rebuild_tensor_v2':
+                # PyTorch tensor rebuilder function
+                return rebuild_tensor_v2
+        return super().find_class(module, name)
+
+
+class TorchStorage:
+    """Stub for torch storage objects"""
+    def __init__(self, *args):
+        if len(args) > 0:
+            self.id = args[0]
+        else:
+            self.id = None
+        self.data = None
+
+    def _set_from_file(self, *args):
+        pass
+
+    def _set_cdata(self, cdata):
+        """Set data from C data pointer (not used but needed for compatibility)"""
+        pass
+
+    def __len__(self):
+        return len(self.data) if self.data is not None else 0
+
+
+class TorchTensor:
+    """Stub for torch tensor objects that can be converted to numpy"""
+    def __init__(self, storage=None, storage_offset=0, size=None, stride=None, requires_grad=False):
+        self.storage = storage
+        self.storage_offset = storage_offset
+        self.size = size or []
+        self.stride = stride or []
+        self.requires_grad = requires_grad
+
+    def __reduce_ex__(self, proto):
+        # This is called during unpickling
+        return (self.__class__, ())
+
+    def numpy(self):
+        """Convert to numpy array"""
+        if hasattr(self, '_numpy_data'):
+            return self._numpy_data
+
+        # Reconstruct tensor from storage
+        if self.storage is not None:
+            # Handle numpy array storage
+            if isinstance(self.storage, np.ndarray):
+                # Extract the data from storage using offset and size
+                if len(self.size) == 0:
+                    return np.array([])
+
+                total_elements = int(np.prod(self.size))
+                offset = self.storage_offset
+
+                # Get flat data from storage
+                flat_data = self.storage[offset:offset + total_elements]
+
+                # Reshape to the correct size
+                try:
+                    return flat_data.reshape(self.size)
+                except:
+                    return flat_data
+
+            # Handle TorchStorage object
+            elif isinstance(self.storage, TorchStorage):
+                if self.storage.data is not None and isinstance(self.storage.data, np.ndarray):
+                    if len(self.size) == 0:
+                        return np.array([])
+
+                    total_elements = int(np.prod(self.size))
+                    offset = self.storage_offset
+
+                    flat_data = self.storage.data[offset:offset + total_elements]
+                    try:
+                        return flat_data.reshape(self.size)
+                    except:
+                        return flat_data
+
+        return np.array([])
+
+    def tolist(self):
+        """Convert to list"""
+        return self.numpy().tolist()
+
+    @property
+    def shape(self):
+        """Return shape for compatibility"""
+        return tuple(self.size)
+
+
+def rebuild_tensor_v2(storage, storage_offset, size, stride, requires_grad=False, backward_hooks=None):
+    """
+    Rebuild a tensor from its components.
+    This is PyTorch's tensor reconstruction function.
+    """
+    tensor = TorchTensor(storage, storage_offset, size, stride, requires_grad)
+    return tensor
+
+
+def load_pth_without_torch(file_path):
+    """
+    Load a PyTorch .pth file without torch installed.
+
+    Supports:
+    - ZIP-based format (torch.save with _use_new_zipfile_serialization=True)
+    - Legacy pickle format (older torch versions)
+
+    Strategy:
+    1. Try loading as ZIP archive with data in archive/data.pkl
+    2. Fall back to legacy pickle with multiple encoding attempts
+    3. Convert all tensors to JSON-serializable format (lists with shape/dtype)
+
+    Returns embeddings dict with numpy arrays converted to lists.
+    """
+    import zipfile
+    import io
+
+    print(f"[YTTS] Loading .pth file without torch: {file_path}")
+
+    # Check if it's a ZIP file (newer PyTorch format)
+    try:
+        with zipfile.ZipFile(file_path, 'r') as zf:
+            print(f"[YTTS] File is a ZIP archive (newer PyTorch format)")
+            print(f"[YTTS] ZIP contents: {zf.namelist()}")
+
+            # Try different pickle locations in the ZIP
+            pickle_locations = ['data.pkl', 'archive/data.pkl', 'data/data.pkl']
+
+            for pkl_path in pickle_locations:
+                if pkl_path in zf.namelist():
+                    print(f"[YTTS] Found pickle at: {pkl_path}")
+                    try:
+                        with zf.open(pkl_path) as f:
+                            # Pass the ZIP file to unpickler so it can load data files from archive/.data/
+                            unpickler = TorchUnpickler(io.BytesIO(f.read()), zip_file=zf)
+                            unpickler.encoding = 'latin1'
+                            embeddings = unpickler.load()
+                        print(f"[YTTS] ✓ Successfully loaded from ZIP format")
+                        print(f"[YTTS] Loaded embeddings with keys: {list(embeddings.keys())}")
+                        return _convert_embeddings(embeddings)
+                    except Exception as e:
+                        print(f"[YTTS] Failed to load {pkl_path}: {e}")
+                        continue
+
+            print(f"[YTTS] Could not find valid pickle file in ZIP")
+    except zipfile.BadZipFile:
+        print(f"[YTTS] Not a ZIP file, trying legacy pickle format...")
+    except Exception as e:
+        print(f"[YTTS] ZIP loading failed: {e}, trying legacy pickle format...")
+
+    # Try different loading strategies for legacy pickle format
+    embeddings = None
+    last_error = None
+
+    # Strategy 1: Try with latin1 encoding (more permissive)
+    try:
+        print(f"[YTTS] Trying to load with latin1 encoding...")
+        with open(file_path, 'rb') as f:
+            unpickler = TorchUnpickler(f)
+            unpickler.encoding = 'latin1'
+            embeddings = unpickler.load()
+        print(f"[YTTS] ✓ Successfully loaded with latin1 encoding")
+    except Exception as e:
+        print(f"[YTTS] ✗ Failed with latin1: {e}")
+        last_error = e
+
+    # Strategy 2: Try with ASCII encoding
+    if embeddings is None:
+        try:
+            print(f"[YTTS] Trying to load with ASCII encoding...")
+            with open(file_path, 'rb') as f:
+                unpickler = TorchUnpickler(f)
+                unpickler.encoding = 'ASCII'
+                embeddings = unpickler.load()
+            print(f"[YTTS] ✓ Successfully loaded with ASCII encoding")
+        except Exception as e:
+            print(f"[YTTS] ✗ Failed with ASCII: {e}")
+            last_error = e
+
+    # Strategy 3: Try with bytes encoding
+    if embeddings is None:
+        try:
+            print(f"[YTTS] Trying to load with bytes encoding...")
+            with open(file_path, 'rb') as f:
+                unpickler = TorchUnpickler(f)
+                unpickler.encoding = 'bytes'
+                embeddings = unpickler.load()
+            print(f"[YTTS] ✓ Successfully loaded with bytes encoding")
+        except Exception as e:
+            print(f"[YTTS] ✗ Failed with bytes: {e}")
+            last_error = e
+
+    if embeddings is None:
+        raise RuntimeError(f"Failed to load .pth file with all strategies. Last error: {last_error}")
+
+    print(f"[YTTS] Loaded embeddings with keys: {list(embeddings.keys())}")
+    return _convert_embeddings(embeddings)
+
+
+def _convert_embeddings(embeddings):
+    """Convert embeddings to serializable format"""
+
+    # Convert any remaining torch-like objects to simple structures
+    serialized = {}
+    for key, value in embeddings.items():
+        if isinstance(value, TorchTensor):
+            # Our custom TorchTensor - convert to numpy then to list
+            arr = value.numpy()
+            serialized[key] = {
+                "data": arr.tolist(),
+                "shape": list(value.shape),
+                "dtype": str(arr.dtype)
+            }
+            print(f"[YTTS] Converted {key}: shape={value.shape}, dtype={arr.dtype}")
+        elif isinstance(value, np.ndarray):
+            # Already numpy
+            serialized[key] = {
+                "data": value.tolist(),
+                "shape": list(value.shape),
+                "dtype": str(value.dtype)
+            }
+            print(f"[YTTS] Numpy array {key}: shape={value.shape}, dtype={value.dtype}")
+        elif hasattr(value, 'numpy'):
+            # Has numpy method
+            arr = value.numpy()
+            serialized[key] = {
+                "data": arr.tolist(),
+                "shape": list(arr.shape),
+                "dtype": str(arr.dtype)
+            }
+            print(f"[YTTS] Converted {key} via numpy(): shape={arr.shape}")
+        elif hasattr(value, 'tolist'):
+            # Has tolist (like a list)
+            shape = getattr(value, 'shape', [len(value)])
+            serialized[key] = {
+                "data": value.tolist() if hasattr(value, 'tolist') else list(value),
+                "shape": list(shape) if hasattr(shape, '__iter__') else [shape],
+                "dtype": str(type(value).__name__)
+            }
+            print(f"[YTTS] Converted {key} via tolist()")
+        else:
+            # Fallback - just store as is
+            serialized[key] = value
+            print(f"[YTTS] Stored {key} as-is (type={type(value).__name__})")
+
+    return serialized
 
 MODEL_CONFIGS = {
     "ytts_v1.0.2": {
@@ -115,28 +479,19 @@ class YTTSService:
 
             response.raise_for_status()
 
-            # Response is a .pth file containing embeddings
+            # Response is a .pth file containing embeddings - load without torch
             with tempfile.NamedTemporaryFile(suffix=".pth", delete=False) as tmp:
                 tmp.write(response.content)
                 tmp_path = tmp.name
 
-            embeddings = torch.load(tmp_path, map_location="cpu")
+            # Use our custom loader that doesn't require torch
+            serialized_embeddings = load_pth_without_torch(tmp_path)
             os.unlink(tmp_path)
 
-            print(f"[YTTS CLONE API] Embeddings keys: {list(embeddings.keys())}")
-
-            # Convert tensors to lists for JSON serialization
-            serialized_embeddings = {}
-            for key, value in embeddings.items():
-                if hasattr(value, 'tolist'):
-                    serialized_embeddings[key] = {
-                        "data": value.tolist(),
-                        "shape": list(value.shape),
-                        "dtype": str(value.dtype)
-                    }
-                    print(f"[YTTS CLONE API] Serialized {key}: shape={value.shape}")
-                else:
-                    serialized_embeddings[key] = value
+            print(f"[YTTS CLONE API] Embeddings keys: {list(serialized_embeddings.keys())}")
+            for key, value in serialized_embeddings.items():
+                if isinstance(value, dict) and 'shape' in value:
+                    print(f"[YTTS CLONE API] Serialized {key}: shape={value['shape']}")
 
             print(f"[YTTS CLONE API] ✓ Clone successful")
 
@@ -360,9 +715,9 @@ class YTTSService:
                 if speaker_embedding is not None:
                     print(f"[YTTS GENERATE API] speaker_embedding length: {len(speaker_embedding)}")
             else:
-                # Embeddings are torch tensors
-                print(f"[YTTS GENERATE API] Converting torch tensors to lists")
-                gpt_cond_latent = embeddings["gpt_cond_latent"].tolist()
+                # Embeddings are in unexpected format - try to convert
+                print(f"[YTTS GENERATE API] Converting embeddings to lists (fallback)")
+                gpt_cond_latent = embeddings["gpt_cond_latent"].tolist() if hasattr(embeddings["gpt_cond_latent"], 'tolist') else embeddings["gpt_cond_latent"]
                 speaker_embedding = embeddings.get("speaker_embedding")
                 if speaker_embedding is not None and hasattr(speaker_embedding, 'tolist'):
                     speaker_embedding = speaker_embedding.tolist()

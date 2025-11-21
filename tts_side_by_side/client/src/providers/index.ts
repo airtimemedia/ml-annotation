@@ -38,63 +38,72 @@ export function getProviders(): Provider[] {
 
 /**
  * Get provider configuration
+ * @throws Error if provider not found
  */
 export function getProviderConfig(providerId: ProviderId): ProviderConfig {
   const config = PROVIDER_CONFIGS[providerId];
   if (!config) {
-    console.warn(`Provider config not found for: ${providerId}`);
-    return PROVIDER_CONFIGS[PROVIDERS.ELEVENLABS as ProviderId]; // Default fallback
+    throw new Error(`Provider config not found: ${providerId}`);
   }
   return config;
 }
 
 /**
  * Get provider name
+ * @throws Error if provider not found
  */
 export function getProviderName(providerId: ProviderId): string {
   const config = getProviderConfig(providerId);
-  return config?.name || providerId;
+  return config.name;
 }
 
 /**
  * Get models for a provider
+ * @throws Error if provider not found
  */
 export function getModelsForProvider(providerId: ProviderId): Model[] {
   const config = getProviderConfig(providerId);
-  return config?.models || [];
+  return config.models;
 }
 
 /**
  * Get parameters for a provider
+ * @throws Error if provider not found
  */
 export function getParametersForProvider(providerId: ProviderId): Parameter[] {
   const config = getProviderConfig(providerId);
-  return config?.parameters || [];
+  return config.parameters;
 }
 
 /**
  * Get default settings for a provider
+ * @throws Error if provider not found
  */
 export function getDefaultSettings(providerId: ProviderId): Settings {
   const config = getProviderConfig(providerId);
-  return config?.getDefaultSettings() || { model: '' };
+  return config.getDefaultSettings();
 }
 
 /**
  * Get API endpoints for a provider
+ * @throws Error if provider not found
  */
 export function getProviderAPI(providerId: ProviderId): APIEndpoints {
   const config = getProviderConfig(providerId);
-  return config?.api || { clone: '', generate: '' };
+  return config.api;
 }
 
 /**
  * Get model display name
+ * @throws Error if model not found
  */
 export function getModelName(providerId: ProviderId, modelId: string): string {
   const models = getModelsForProvider(providerId);
   const model = models.find(m => m.id === modelId);
-  return model?.name || modelId;
+  if (!model) {
+    throw new Error(`Model not found: ${modelId} for provider ${providerId}`);
+  }
+  return model.name;
 }
 
 /**

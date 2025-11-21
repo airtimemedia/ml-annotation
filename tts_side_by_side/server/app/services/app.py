@@ -12,6 +12,8 @@ from app.constants import (
     CORS_ALLOWED_HEADERS,
     CORS_ALLOWED_METHODS
 )
+from app.routes.main import main_bp
+from app.routes.tts import tts_bp
 
 
 def create_app():
@@ -41,9 +43,6 @@ def create_app():
     )
 
     # Register blueprints
-    from app.routes.main import main_bp
-    from app.routes.tts import tts_bp
-
     app.register_blueprint(main_bp)
     app.register_blueprint(tts_bp, url_prefix="/api/tts")
 

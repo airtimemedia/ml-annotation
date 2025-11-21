@@ -11,19 +11,28 @@ export default function AudioUpload({ onAudioUploaded, disabled }: AudioUploadPr
   const [status, setStatus] = useState<StatusMessage | null>(null);
   const [goldenSetFiles, setGoldenSetFiles] = useState<GoldenSetFile[]>([]);
   const [selectedGoldenSet, setSelectedGoldenSet] = useState<string>('');
+  const [isLoadingGoldenSet, setIsLoadingGoldenSet] = useState<boolean>(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch golden set files on mount
   useEffect(() => {
     const fetchGoldenSet = async () => {
+      console.log('[AudioUpload] Fetching golden set files...');
+      setIsLoadingGoldenSet(true);
       try {
         const response = await fetch('/api/tts/golden-set');
         const data = await response.json();
-        if (response.ok) {
+        console.log('[AudioUpload] Golden set response:', response.ok, data);
+        if (response.ok && data.files) {
           setGoldenSetFiles(data.files);
+          console.log('[AudioUpload] Loaded', data.files.length, 'golden set files');
+        } else {
+          console.error('[AudioUpload] Error in response:', data);
         }
       } catch (error) {
-        console.error('Error fetching golden set:', error);
+        console.error('[AudioUpload] Error fetching golden set:', error);
+      } finally {
+        setIsLoadingGoldenSet(false);
       }
     };
     fetchGoldenSet();
@@ -109,21 +118,25 @@ export default function AudioUpload({ onAudioUploaded, disabled }: AudioUploadPr
     <div className="audio-upload">
       <div className="form-group">
         <div className="upload-controls">
-          {goldenSetFiles.length > 0 && (
-            <select
-              value={selectedGoldenSet}
-              onChange={handleGoldenSetSelect}
-              disabled={disabled}
-              className="setting-select"
-            >
-              <option value="">Select from golden set...</option>
-              {goldenSetFiles.map((file) => (
-                <option key={file.name} value={file.name}>
-                  {file.label}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            value={selectedGoldenSet}
+            onChange={handleGoldenSetSelect}
+            disabled={disabled || isLoadingGoldenSet}
+            className="setting-select"
+          >
+            <option value="">
+              {isLoadingGoldenSet
+                ? 'Loading golden set...'
+                : goldenSetFiles.length > 0
+                  ? 'Select from golden set...'
+                  : 'No golden set files available'}
+            </option>
+            {goldenSetFiles.map((file) => (
+              <option key={file.name} value={file.name}>
+                {file.label}
+              </option>
+            ))}
+          </select>
 
           <input
             ref={fileInputRef}

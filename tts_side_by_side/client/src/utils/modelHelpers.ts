@@ -28,6 +28,7 @@ export const getProviderName = (provider: ProviderId): string => {
 
 /**
  * Get model display name
+ * @throws Error if model or provider not found
  */
 export const getModelDisplay = (model: string, provider: ProviderId | null = null): string => {
   // If provider is specified, use the more efficient lookup
@@ -44,7 +45,7 @@ export const getModelDisplay = (model: string, provider: ProviderId | null = nul
     }
   }
 
-  return model;
+  throw new Error(`Model not found: ${model}. Provider must be specified or model must exist in configured providers.`);
 };
 
 /**

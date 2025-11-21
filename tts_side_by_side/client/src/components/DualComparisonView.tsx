@@ -30,45 +30,43 @@ export default function DualComparisonView({ audioData, provider1, provider2, mo
   return (
     <div className="dual-comparison-view">
       <div className="audio-result">
-        <h3 className="audio-title">
-          {getProviderName(provider1)} - {getModelDisplay(model1, provider1)}
-        </h3>
-        <div className="audio-player-wrapper">
-          {service1 && service1.status === 'ready' ? (
-            <AudioPlayerWithWaveform
-              src={`/api/tts/audio/${service1.path.split('/').pop()}`}
-              className="audio-player"
-            />
-          ) : (
-            <audio
-              controls
-              className="audio-player audio-player-disabled"
-            >
-              Your browser does not support the audio element.
-            </audio>
-          )}
-        </div>
+        {service1 && service1.status === 'ready' && service1.provider && service1.model && (
+          <h3 className="audio-title">
+            {getProviderName(service1.provider as ProviderId)} - {getModelDisplay(service1.model, service1.provider as ProviderId)}
+          </h3>
+        )}
+        {service1 && service1.status === 'ready' ? (
+          <AudioPlayerWithWaveform
+            src={`/api/tts/audio/${service1.path.split('/').pop()}`}
+          />
+        ) : (
+          <audio
+            controls
+            className="audio-player audio-player-disabled"
+          >
+            Your browser does not support the audio element.
+          </audio>
+        )}
       </div>
 
       <div className="audio-result">
-        <h3 className="audio-title">
-          {getProviderName(provider2)} - {getModelDisplay(model2, provider2)}
-        </h3>
-        <div className="audio-player-wrapper">
-          {service2 && service2.status === 'ready' ? (
-            <AudioPlayerWithWaveform
-              src={`/api/tts/audio/${service2.path.split('/').pop()}`}
-              className="audio-player"
-            />
-          ) : (
-            <audio
-              controls
-              className="audio-player audio-player-disabled"
-            >
-              Your browser does not support the audio element.
-            </audio>
-          )}
-        </div>
+        {service2 && service2.status === 'ready' && service2.provider && service2.model && (
+          <h3 className="audio-title">
+            {getProviderName(service2.provider as ProviderId)} - {getModelDisplay(service2.model, service2.provider as ProviderId)}
+          </h3>
+        )}
+        {service2 && service2.status === 'ready' ? (
+          <AudioPlayerWithWaveform
+            src={`/api/tts/audio/${service2.path.split('/').pop()}`}
+          />
+        ) : (
+          <audio
+            controls
+            className="audio-player audio-player-disabled"
+          >
+            Your browser does not support the audio element.
+          </audio>
+        )}
       </div>
     </div>
   );

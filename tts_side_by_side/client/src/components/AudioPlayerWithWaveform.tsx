@@ -89,32 +89,47 @@ export default function AudioPlayerWithWaveform({ src, className = '' }: AudioPl
 
     // Draw waveform
     const barWidth = rect.width / waveformData.length;
-    const barGap = barWidth * 0.2;
+    const barGap = barWidth * 0.4;
     const drawWidth = barWidth - barGap;
 
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    // Use a more subtle color
+    ctx.fillStyle = 'rgba(29, 29, 31, 0.2)';
 
     waveformData.forEach((amplitude, index) => {
       const x = index * barWidth;
-      const barHeight = amplitude * rect.height * 0.8;
+      const barHeight = Math.max(amplitude * rect.height * 0.75, 2); // Minimum height of 2px
       const y = (rect.height - barHeight) / 2;
 
-      ctx.fillRect(x, y, drawWidth, barHeight);
+      // Round the corners of bars
+      ctx.beginPath();
+      ctx.roundRect(x, y, drawWidth, barHeight, 1.5);
+      ctx.fill();
     });
   }, [waveformData]);
 
   return (
     <div className={`audio-player-with-waveform ${className}`}>
-      <canvas ref={canvasRef} className="waveform-canvas" />
       <audio
         ref={audioRef}
         controls
         controlsList="nodownload"
         src={src}
-        className="audio-player-overlay"
+        className="audio-player"
       >
         Your browser does not support the audio element.
       </audio>
+      <div className="waveform-container">
+        {!waveformData && (
+          <div className="waveform-placeholder">
+            Loading waveform...
+          </div>
+        )}
+        <canvas
+          ref={canvasRef}
+          className="waveform-canvas"
+          style={{ display: waveformData ? 'block' : 'none' }}
+        />
+      </div>
     </div>
   );
 }

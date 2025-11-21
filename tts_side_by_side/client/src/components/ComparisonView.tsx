@@ -53,36 +53,34 @@ export default function ComparisonView({ audioData }: ComparisonViewProps) {
             <h3>ElevenLabs</h3>
           </div>
           {elevenlabs && elevenlabs.status === 'ready' ? (
-            <div className="audio-player-wrapper">
-              <AudioPlayerWithWaveform
-                src={`/api/tts/audio/${elevenlabs.path.split('/').pop()}`}
-                className="audio-player"
-              />
-            </div>
+            <AudioPlayerWithWaveform
+              src={`/api/tts/audio/${elevenlabs.path.split('/').pop()}`}
+            />
           ) : (
-            <div className="audio-placeholder-small">
-              <p>Audio not available</p>
-            </div>
+            <audio
+              controls
+              className="audio-player audio-player-disabled"
+            >
+              Your browser does not support the audio element.
+            </audio>
           )}
         </div>
-
-        <div className="comparison-divider"></div>
 
         <div className="comparison-side">
           <div className="comparison-header">
             <h3>YTTS API</h3>
           </div>
           {other_api && other_api.status === 'ready' ? (
-            <div className="audio-player-wrapper">
-              <AudioPlayerWithWaveform
-                src={`/api/tts/audio/${other_api.path.split('/').pop()}`}
-                className="audio-player"
-              />
-            </div>
+            <AudioPlayerWithWaveform
+              src={`/api/tts/audio/${other_api.path.split('/').pop()}`}
+            />
           ) : (
-            <div className="audio-placeholder-small">
-              <p>Coming soon</p>
-            </div>
+            <audio
+              controls
+              className="audio-player audio-player-disabled"
+            >
+              Your browser does not support the audio element.
+            </audio>
           )}
         </div>
       </div>

@@ -8,6 +8,7 @@ from app.constants import (
     ENV_DEVELOPMENT,
     SERVER_HOST
 )
+from app.services.app import create_app
 
 # Load .env from project root directory (only for local development)
 # In production (Vercel), environment variables are set directly and this is skipped
@@ -17,8 +18,6 @@ if env_path.exists():
     print(f"Loaded .env from: {env_path}")
 else:
     print(f"No .env file found at {env_path}, using environment variables from host")
-
-from app.services.app import create_app
 
 app = create_app()
 
