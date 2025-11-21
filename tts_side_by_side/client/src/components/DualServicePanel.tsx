@@ -11,6 +11,7 @@ interface SingleServicePanelProps {
   onClone: () => void;
   isCloning: boolean;
   isCloned: boolean;
+  needsReclone: boolean;
   cloneError: string | null;
   onSettingsChange: (settings: Settings) => void;
   onGenerate: () => void;
@@ -27,6 +28,7 @@ function SingleServicePanel({
   onClone,
   isCloning,
   isCloned,
+  needsReclone,
   cloneError,
   onSettingsChange,
   onGenerate,
@@ -171,8 +173,8 @@ function SingleServicePanel({
 
         <button
           onClick={onClone}
-          disabled={disabled || isCloning || isCloned}
-          className={`btn ${isCloned ? 'btn-secondary' : 'btn-primary'}`}
+          disabled={disabled || isCloning || (isCloned && !needsReclone)}
+          className={`btn ${isCloned && !needsReclone ? 'btn-secondary' : 'btn-primary'}`}
           style={{ width: '100%', marginTop: 'var(--spacing-sm)' }}
         >
           {isCloning ? (
@@ -180,8 +182,10 @@ function SingleServicePanel({
               <span className="spinner"></span>
               Cloning Voice...
             </>
-          ) : isCloned ? (
+          ) : isCloned && !needsReclone ? (
             <>✓ Voice Cloned</>
+          ) : isCloned && needsReclone ? (
+            'Reclone Voice'
           ) : (
             'Clone Voice'
           )}
@@ -254,6 +258,8 @@ interface DualServicePanelProps {
   isCloning2: boolean;
   isCloned1: boolean;
   isCloned2: boolean;
+  needsReclone1: boolean;
+  needsReclone2: boolean;
   cloneError1: string | null;
   cloneError2: string | null;
   onSettings1Change: (settings: Settings) => void;
@@ -280,6 +286,8 @@ export default function DualServicePanel({
   isCloning2,
   isCloned1,
   isCloned2,
+  needsReclone1,
+  needsReclone2,
   cloneError1,
   cloneError2,
   onSettings1Change,
@@ -300,6 +308,7 @@ export default function DualServicePanel({
         onClone={onClone1}
         isCloning={isCloning1}
         isCloned={isCloned1}
+        needsReclone={needsReclone1}
         cloneError={cloneError1}
         onSettingsChange={onSettings1Change}
         onGenerate={() => onGenerate('service1')}
@@ -315,6 +324,7 @@ export default function DualServicePanel({
         onClone={onClone2}
         isCloning={isCloning2}
         isCloned={isCloned2}
+        needsReclone={needsReclone2}
         cloneError={cloneError2}
         onSettingsChange={onSettings2Change}
         onGenerate={() => onGenerate('service2')}

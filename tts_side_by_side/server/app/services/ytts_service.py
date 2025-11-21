@@ -2,11 +2,12 @@
 import os
 import tempfile
 import base64
+import json
+import traceback
 import requests
 import torch
-import boto3
 from pathlib import Path
-from datetime import datetime
+from app.utils.audio_utils import convert_to_wav
 from .checkpoint_service import CheckpointService
 
 MODEL_CONFIGS = {
@@ -56,33 +57,6 @@ class YTTSService:
         self.decoder_checkpoint = DECODER_CHECKPOINT
         self.model_configs = MODEL_CONFIGS
         self.checkpoint_service = CheckpointService()
-
-        # S3 configuration for Tahoe voice creation
-        self.s3_bucket = "cantina-nicholas"
-        self.s3_prefix = "tts-side-by-side-temp/"
-        self.s3_region = "us-east-2"
-
-        # Initialize S3 client
-        try:
-            # Build S3 client config - only include credentials if they're set
-            s3_config = {'region_name': self.s3_region}
-
-            aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-            aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-            aws_session_token = os.getenv("AWS_SESSION_TOKEN")
-
-            if aws_access_key:
-                s3_config['aws_access_key_id'] = aws_access_key
-            if aws_secret_key:
-                s3_config['aws_secret_access_key'] = aws_secret_key
-            if aws_session_token:
-                s3_config['aws_session_token'] = aws_session_token
-
-            self.s3_client = boto3.client('s3', **s3_config)
-            print(f"[YTTS] S3 client initialized for bucket: {self.s3_bucket}")
-        except Exception as e:
-            print(f"[YTTS] Warning: Could not initialize S3 client: {e}")
-            self.s3_client = None
 
     def clone_voice(self, audio_file_path: str, model: str = "ytts_v1.0.2") -> dict:
         """Clone voice from audio file, returns embeddings dict"""
@@ -174,64 +148,28 @@ class YTTSService:
 
         except Exception as e:
             print(f"[YTTS CLONE API] ✗ Error: {str(e)}")
-            import traceback
             traceback.print_exc()
             raise
 
-    def _upload_to_s3_and_get_url(self, audio_file_path: str) -> str:
-        """Upload audio file to S3 and return pre-signed URL"""
-        if not self.s3_client:
-            raise RuntimeError("S3 client not initialized. Check AWS credentials.")
-
-        # Generate unique filename
-        filename = os.path.basename(audio_file_path)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        s3_key = f"{self.s3_prefix}{timestamp}_{filename}"
-
-        print(f"[YTTS S3] Uploading to s3://{self.s3_bucket}/{s3_key}")
-
-        try:
-            # Upload file to S3
-            self.s3_client.upload_file(
-                audio_file_path,
-                self.s3_bucket,
-                s3_key,
-                ExtraArgs={'ContentType': 'audio/wav'}
-            )
-            print(f"[YTTS S3] ✓ File uploaded successfully")
-
-            # Generate pre-signed URL (valid for 1 hour)
-            presigned_url = self.s3_client.generate_presigned_url(
-                'get_object',
-                Params={
-                    'Bucket': self.s3_bucket,
-                    'Key': s3_key
-                },
-                ExpiresIn=3600  # 1 hour
-            )
-            print(f"[YTTS S3] Generated pre-signed URL (valid for 1 hour)")
-            return presigned_url
-
-        except Exception as e:
-            print(f"[YTTS S3] ✗ Error uploading to S3: {e}")
-            raise
-
     def _clone_voice_tahoe(self, audio_file_path: str, model_config: dict) -> dict:
-        """Clone voice using Tahoe API (v1.1.0) - multipart file upload with metadata"""
-        from app.utils.audio_utils import convert_to_wav
+        """
+        Clone voice using Tahoe API (v1.1.0).
 
+        Tahoe requires WAV format and uses multipart form upload with metadata.
+        Returns a voice object with sample-url for TTS generation.
+        """
         api_url = model_config['api_url']
         create_voice_endpoint = model_config['endpoints']['create_voice']
 
         print(f"[YTTS CLONE TAHOE] Using API URL: {api_url}")
         print(f"[YTTS CLONE TAHOE] Local file: {audio_file_path}")
 
-        # Convert to WAV format if needed (Tahoe requires WAV)
+        # Tahoe API strictly requires WAV format - convert if needed
         wav_file_path = None
         needs_cleanup = False
         try:
             wav_file_path = convert_to_wav(audio_file_path)
-            needs_cleanup = (wav_file_path != audio_file_path)  # Only clean up if we created a new file
+            needs_cleanup = (wav_file_path != audio_file_path)
             print(f"[YTTS CLONE TAHOE] WAV file: {wav_file_path} (cleanup={needs_cleanup})")
         except Exception as e:
             print(f"[YTTS CLONE TAHOE] ✗ Error converting audio to WAV: {e}")
@@ -243,7 +181,6 @@ class YTTSService:
             print(f"[YTTS CLONE TAHOE] POST to {create_url} (multipart upload with metadata)")
 
             # Prepare metadata
-            import json
             filename = os.path.basename(wav_file_path)
             metadata = {
                 "display-name": filename.replace('.wav', '').replace('.mp3', ''),
@@ -291,7 +228,6 @@ class YTTSService:
 
         except Exception as e:
             print(f"[YTTS CLONE TAHOE] ✗ Error: {str(e)}")
-            import traceback
             traceback.print_exc()
             raise
         finally:
@@ -335,7 +271,12 @@ class YTTSService:
             raise ValueError(f"Unknown voice data type: {voice_data.get('type')}")
 
     def _generate_speech_tahoe(self, text: str, voice_data: dict, settings: dict) -> str:
-        """Generate speech using Tahoe API (v1.1.0) - POST text to sample-url"""
+        """
+        Generate speech using Tahoe API (v1.1.0).
+
+        Posts text to the voice's sample-url endpoint and streams back audio.
+        Tahoe typically returns MP4/AAC format audio.
+        """
         sample_url = voice_data["sample_url"]
 
         print(f"[YTTS GENERATE TAHOE] Using sample URL: {sample_url}")
@@ -387,7 +328,6 @@ class YTTSService:
 
         except Exception as e:
             print(f"[YTTS GENERATE TAHOE] ✗ Error: {str(e)}")
-            import traceback
             traceback.print_exc()
             raise
 
@@ -467,6 +407,5 @@ class YTTSService:
 
         except Exception as e:
             print(f"[YTTS GENERATE API] ✗ Error: {str(e)}")
-            import traceback
             traceback.print_exc()
             raise

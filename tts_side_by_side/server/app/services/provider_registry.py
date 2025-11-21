@@ -112,28 +112,28 @@ class ProviderRegistry:
         service = self.get_service(provider_id)
 
         # Determine call format based on voice_data structure:
-        # - If voice_data has "type" field (api/checkpoint/tahoe), it's YTTS complex format
-        # - If voice_data is a dict with ONLY voice_id and no type, it's simple format (ElevenLabs)
-        # - Otherwise pass voice_data as-is (works for both str and dict)
+        # - YTTS returns dicts with "type" field (api/checkpoint/tahoe) → complex format
+        # - ElevenLabs route wraps string voice_id as {"voice_id": str} → simple format
+        # - Legacy/edge case: raw string voice_id → fallback format
         if isinstance(voice_data, dict) and "type" in voice_data:
-            # Complex provider format (YTTS) - has type field
-            print(f"[PROVIDER REGISTRY] Using complex provider format (YTTS) with type={voice_data['type']}")
+            # YTTS complex format - has type field indicating how to generate speech
+            print(f"[PROVIDER REGISTRY] Using YTTS format with type={voice_data['type']}")
             return service.generate_speech(
                 text=text,
                 voice_data=voice_data,
                 settings=settings or {}
             )
-        elif isinstance(voice_data, dict) and "voice_id" in voice_data and "type" not in voice_data:
-            # Simple provider format (ElevenLabs) - has voice_id but no type
-            print(f"[PROVIDER REGISTRY] Using simple provider format with voice_id")
+        elif isinstance(voice_data, dict) and "voice_id" in voice_data:
+            # ElevenLabs simple format - dict with voice_id but no type
+            print(f"[PROVIDER REGISTRY] Using ElevenLabs format with voice_id")
             return service.generate_speech(
                 text=text,
                 voice_id=voice_data["voice_id"],
                 settings=settings or {}
             )
         else:
-            # Either a string (old format) or complex dict without type field
-            print(f"[PROVIDER REGISTRY] Using fallback format (passing voice_data as-is)")
+            # Fallback for legacy string voice IDs or unexpected formats
+            print(f"[PROVIDER REGISTRY] Using fallback format (voice_data={type(voice_data).__name__})")
             return service.generate_speech(
                 text=text,
                 voice_data=voice_data,

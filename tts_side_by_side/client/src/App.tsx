@@ -93,7 +93,7 @@ function App() {
     setReferenceAudio(data);
   };
 
-  const handleClone = async (service: number, provider: ProviderId, model: string) => {
+  const handleClone = async (service: number, provider: ProviderId, model: string, currentSettings: Settings | null) => {
     if (!referenceAudio) return;
 
     const setCloning = service === 1 ? setIsCloning1 : setIsCloning2;
@@ -170,6 +170,9 @@ function App() {
             [model]: {
               ...voiceData,
               clonedWithFile: referenceAudio.filename,
+              clonedWithRefAudioKey: refKey,
+              clonedWithText: text,
+              clonedWithSettings: currentSettings || getDefaultSettings(provider),
             },
           },
         },
@@ -183,8 +186,8 @@ function App() {
     }
   };
 
-  const handleClone1 = () => handleClone(1, provider1, model1);
-  const handleClone2 = () => handleClone(2, provider2, model2);
+  const handleClone1 = () => handleClone(1, provider1, model1, settings1);
+  const handleClone2 = () => handleClone(2, provider2, model2, settings2);
 
   const handleProvider1Change = (newProvider: ProviderId) => {
     setProvider1(newProvider);
@@ -227,6 +230,8 @@ function App() {
   const isStep2Complete = !!text.trim();
   const isVoice1Cloned = isVoiceCloned(provider1, model1);
   const isVoice2Cloned = isVoiceCloned(provider2, model2);
+  const needsReclone1 = needsRecloning(provider1, model1, settings1);
+  const needsReclone2 = needsRecloning(provider2, model2, settings2);
   const canConfigureSettings = isStep1Complete && isStep2Complete;
   const canGenerate1 = canConfigureSettings && isVoice1Cloned;
   const canGenerate2 = canConfigureSettings && isVoice2Cloned;
@@ -280,6 +285,8 @@ function App() {
             isCloning2={isCloning2}
             isCloned1={isVoice1Cloned}
             isCloned2={isVoice2Cloned}
+            needsReclone1={needsReclone1}
+            needsReclone2={needsReclone2}
             cloneError1={cloneError1}
             cloneError2={cloneError2}
             onSettings1Change={setSettings1}
