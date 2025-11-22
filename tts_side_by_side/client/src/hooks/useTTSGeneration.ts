@@ -77,6 +77,11 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
 
       // Generate for Service 1
       if (generateFor1) {
+        // Validate settings.model matches what we're storing
+        if (!settings1.model) {
+          throw new Error('Service 1: settings.model is undefined or empty');
+        }
+
         const payload1 = {
           text: text.trim(),
           voices: voices,
@@ -84,7 +89,9 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
           settings: settings1,
         };
         console.log('[GENERATE] Service 1 request:', payload1);
+        console.log('[GENERATE] Service 1 provider:', provider1);
         console.log('[GENERATE] Service 1 model:', settings1.model);
+        console.log('[GENERATE] Service 1 full settings:', settings1);
 
         const response1 = await fetch('/api/tts/generate', {
           method: 'POST',
@@ -107,10 +114,19 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
           provider: provider1,
           model: settings1.model,
         };
+        console.log('[GENERATE] Service 1 audio stored with:', {
+          provider: provider1,
+          model: settings1.model,
+        });
       }
 
       // Generate for Service 2
       if (generateFor2) {
+        // Validate settings.model matches what we're storing
+        if (!settings2.model) {
+          throw new Error('Service 2: settings.model is undefined or empty');
+        }
+
         const payload2 = {
           text: text.trim(),
           voices: voices,
@@ -118,7 +134,9 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
           settings: settings2,
         };
         console.log('[GENERATE] Service 2 request:', payload2);
+        console.log('[GENERATE] Service 2 provider:', provider2);
         console.log('[GENERATE] Service 2 model:', settings2.model);
+        console.log('[GENERATE] Service 2 full settings:', settings2);
 
         const response2 = await fetch('/api/tts/generate', {
           method: 'POST',
@@ -141,6 +159,10 @@ export const useTTSGeneration = (): UseTTSGenerationReturn => {
           provider: provider2,
           model: settings2.model,
         };
+        console.log('[GENERATE] Service 2 audio stored with:', {
+          provider: provider2,
+          model: settings2.model,
+        });
       }
 
       // Update audio data based on which services were generated

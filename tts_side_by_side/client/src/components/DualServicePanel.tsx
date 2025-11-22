@@ -51,6 +51,20 @@ function SingleServicePanel({
     }
   }, [provider]);
 
+  // Update settings.model when model prop changes
+  useEffect(() => {
+    const newSettings = { ...settings, model };
+    console.log('[SERVICE PANEL] Model changed, updating settings:', {
+      provider,
+      model,
+      newSettings,
+    });
+    setSettings(newSettings);
+    if (onSettingsChange) {
+      onSettingsChange(newSettings);
+    }
+  }, [model]);
+
   const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newProvider = e.target.value as ProviderId;
     onProviderChange(newProvider);

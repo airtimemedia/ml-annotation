@@ -27,6 +27,24 @@ export default function DualComparisonView({ audioData, provider1, provider2, mo
   const service1 = audioData?.service1;
   const service2 = audioData?.service2;
 
+  // Debug logging for titles
+  useEffect(() => {
+    if (service1 && service1.status === 'ready') {
+      console.log('[COMPARISON VIEW] Service 1 audio data:', {
+        provider: service1.provider,
+        model: service1.model,
+        path: service1.path,
+      });
+    }
+    if (service2 && service2.status === 'ready') {
+      console.log('[COMPARISON VIEW] Service 2 audio data:', {
+        provider: service2.provider,
+        model: service2.model,
+        path: service2.path,
+      });
+    }
+  }, [service1, service2]);
+
   return (
     <div className="dual-comparison-view">
       <div className="audio-result">
